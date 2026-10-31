@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Themed-icon layer: Android tints this one colour, using alpha for depth. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Keycap rim -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillAlpha="0.35"
+        android:fillType="evenOdd"
+        android:pathData="M37,31 H71 A13,13 0 0 1 84,44 V65 A13,13 0 0 1 71,78 H37 A13,13 0 0 1 24,65 V44 A13,13 0 0 1 37,31 Z M37,32 H71 A9,9 0 0 1 80,41 V57 A9,9 0 0 1 71,66 H37 A9,9 0 0 1 28,57 V41 A9,9 0 0 1 37,32 Z" />
+    <!-- Antennas -->
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M44,48 L41.5,37.5 M64,48 L66.5,37.5" />
+    <!-- Router body with its status lights cut out -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M40,48 H68 A3,3 0 0 1 71,51 V57 A3,3 0 0 1 68,60 H40 A3,3 0 0 1 37,57 V51 A3,3 0 0 1 40,48 Z M43,54 m-1.5,0 a1.5,1.5 0 1 0 3,0 a1.5,1.5 0 1 0 -3,0 Z M48,54 m-1.5,0 a1.5,1.5 0 1 0 3,0 a1.5,1.5 0 1 0 -3,0 Z M53,54 m-1.5,0 a1.5,1.5 0 1 0 3,0 a1.5,1.5 0 1 0 -3,0 Z" />
+</vector>

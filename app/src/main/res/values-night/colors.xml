@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Signal Dark. -->
+    <color name="window_bg">#FF08080A</color>
+
+    <color name="signal_widget_bg">#FF141417</color>
+    <color name="signal_widget_border">#FF232328</color>
+    <color name="signal_widget_text">#FFF4F4F2</color>
+    <color name="signal_widget_muted">#FFA3A3AB</color>
+    <color name="signal_widget_stopped">#FF8C8C94</color>
+    <color name="signal_widget_accent_text">#FFB48CFF</color>
+    <color name="signal_widget_warn">#FFF2C94C</color>
+    <color name="signal_widget_error">#FFFF6B6B</color>
+    <color name="signal_widget_track">#FF26262C</color>
+    <color name="signal_widget_fill">#FFF4F4F2</color>
+    <color name="signal_widget_button">#FF1C1C21</color>
+</resources>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Router key: a router with two antennas and status lights on a keycap face. 108dp adaptive canvas, art inside the 66dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Keycap body -->
+    <path
+        android:fillColor="#FF1C1C21"
+        android:pathData="M37,31 H71 A13,13 0 0 1 84,44 V65 A13,13 0 0 1 71,78 H37 A13,13 0 0 1 24,65 V44 A13,13 0 0 1 37,31 Z" />
+    <!-- Key face -->
+    <path
+        android:fillColor="#FF141417"
+        android:strokeColor="#FFB48CFF"
+        android:strokeWidth="3"
+        android:pathData="M37,32 H71 A9,9 0 0 1 80,41 V57 A9,9 0 0 1 71,66 H37 A9,9 0 0 1 28,57 V41 A9,9 0 0 1 37,32 Z" />
+    <!-- Antennas -->
+    <path
+        android:strokeColor="#FFB48CFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:pathData="M44,48 L41.5,37.5 M64,48 L66.5,37.5" />
+    <!-- Router body -->
+    <path
+        android:fillColor="#FF1C1C21"
+        android:strokeColor="#FFB48CFF"
+        android:strokeWidth="1.8"
+        android:pathData="M40,48 H68 A3,3 0 0 1 71,51 V57 A3,3 0 0 1 68,60 H40 A3,3 0 0 1 37,57 V51 A3,3 0 0 1 40,48 Z" />
+    <!-- Status lights -->
+    <path
+        android:fillColor="#FFB48CFF"
+        android:pathData="M43,54 m-1.5,0 a1.5,1.5 0 1 0 3,0 a1.5,1.5 0 1 0 -3,0 M48,54 m-1.5,0 a1.5,1.5 0 1 0 3,0 a1.5,1.5 0 1 0 -3,0 M53,54 m-1.5,0 a1.5,1.5 0 1 0 3,0 a1.5,1.5 0 1 0 -3,0" />
+    <!-- Ports -->
+    <path
+        android:strokeColor="#FF9A9AA3"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round"
+        android:pathData="M58,54 H66" />
+    <!-- Bar on the front of the key -->
+    <path
+        android:strokeColor="#FF4A4A52"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M47,72.5 H61" />
+</vector>

@@ -1,0 +1,23 @@
+.gradle/
+build/
+.idea/
+*.iml
+.DS_Store
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Machine-local SDK path
+local.properties
+
+# Release signing: the keystore, its base64 and its passwords never go in the repo.
+# CI decodes the keystore from the KEYSTORE_BASE64 secret at build time.
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.jks.base64
+*.keystore.base64
+keystore.properties
+signing.properties
+!debug.keystore

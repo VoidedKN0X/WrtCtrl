@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- OpenWrt's web server (uhttpd) serves LuCI and the ubus API over plain HTTP unless HTTPS was set up.
+     Router addresses are typed by the user, so cleartext can't be limited to a fixed domain here: it stays
+     possible at the platform level, and the app enforces it in code (CleartextPolicy.kt): HTTP is only used
+     for a router address the user chose after an "unencrypted connection" warning, never for anything else,
+     and an HTTPS request is never downgraded.
+     System and user-installed CAs are trusted so routers behind a private CA work. A self-signed router
+     certificate is never trusted here: the app pins the exact certificate the user confirmed by its
+     SHA-256 fingerprint, per router, in code (Tls.kt). -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

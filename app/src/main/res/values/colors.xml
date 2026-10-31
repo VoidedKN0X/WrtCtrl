@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Signal Light window background (values-night has the dark one). -->
+    <color name="window_bg">#FFF5F5F1</color>
+    <color name="ic_bg">#FF08080A</color>
+
+    <!-- Signal colours for the home-screen widgets (light; values-night has dark). -->
+    <color name="signal_widget_bg">#FFFFFFFF</color>
+    <color name="signal_widget_border">#FFDEDED7</color>
+    <color name="signal_widget_text">#FF0B0B0D</color>
+    <color name="signal_widget_muted">#FF5C5C64</color>
+    <color name="signal_widget_stopped">#FF74747C</color>
+    <color name="signal_widget_accent_text">#FF6A3BDB</color>
+    <color name="signal_widget_warn">#FFA86F00</color>
+    <color name="signal_widget_error">#FFD93636</color>
+    <color name="signal_widget_track">#FFE2E2DC</color>
+    <color name="signal_widget_fill">#FF0B0B0D</color>
+    <color name="signal_widget_button">#FFECECE7</color>
+    <!-- The accent fill is the same in both themes. -->
+    <color name="signal_accent">#FFB48CFF</color>
+    <color name="signal_on_accent">#FF08080A</color>
+</resources>
