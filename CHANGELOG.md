@@ -4,6 +4,27 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.2.0 (2026-10-31)
+
+WrtCtrl now signs in to your OpenWrt router. It includes everything from 0.1.0, which was never released on its own. The four tabs still show what's coming; they fill up in the next versions.
+
+### New
+
+- **Router setup.** On first start WrtCtrl asks for your router's address, a name (optional; it uses the router's hostname otherwise), the username and the password. It signs in to the router's ubus API, the same one LuCI uses, then shows the model, OpenWrt version and who you're signed in as before you save.
+- **What this login can do.** After signing in, and on the **You** page, WrtCtrl lists what your login is allowed to do on the router: status, connected devices, DHCP, port forwards and blocking, restarting interfaces, services, the system log, package updates and reboot. It reads this from the login's rpcd permissions, so anything it can't do will be greyed out instead of failing. A login that can't change anything starts in read-only mode.
+- **Several routers.** Tap your profile picture › **Routers** to add more routers (such as an access point), switch between them, change one's address or sign-in, turn read-only mode on per router, or remove one.
+- **Stays signed in.** The router ends a session after a few minutes without use; WrtCtrl then signs in again on its own with the saved password, so you don't see it.
+- **The profile picture** shows your router's first letter, with a small violet square while WrtCtrl is connected. Connection problems show on the **You** page.
+- **README:** a ready-to-copy least-privilege setup (a dedicated `wrtctrl` login with read-only and operator permissions), checked against OpenWrt 25.12.
+
+### Security
+
+- **An unencrypted connection only after you agree.** OpenWrt serves its API over plain HTTP unless you set up HTTPS. For an http:// address, WrtCtrl first asks **Use an unencrypted connection?** and sends nothing, not even the username, until you tap **Use HTTP**. The router is then marked **Not encrypted (HTTP)** wherever it's shown.
+- **Self-signed certificates by fingerprint.** For an https:// address with a certificate the phone doesn't trust, WrtCtrl shows its SHA-256 fingerprint to compare with the router's before sending anything, then accepts only that exact certificate for that router. If it ever changes, WrtCtrl stops and asks again.
+- **Your password stays with its router.** It's stored encrypted (Android Keystore, and your app PIN while WrtCtrl is locked) and only reused for the same address and username: change either and you have to type it again. The setup screen is always kept out of screenshots and the recent-apps view.
+- **Read-only mode** blocks every change before anything is sent to the router.
+- One address per router, which you set: WrtCtrl never reads your Wi-Fi network's name and never switches addresses on its own.
+
 ## v0.1.0 (2026-10-31)
 
 The first build of WrtCtrl: the foundation the router features are built on. It doesn't connect to a router yet; router setup arrives in the next version.

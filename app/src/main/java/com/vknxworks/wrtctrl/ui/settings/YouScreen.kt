@@ -51,6 +51,10 @@ import com.vknxworks.wrtctrl.BuildConfig
 import com.vknxworks.wrtctrl.R
 import com.vknxworks.wrtctrl.container
 import com.vknxworks.wrtctrl.ui.components.GroupSwitch
+import com.vknxworks.wrtctrl.ui.components.errorMessage
+import com.vknxworks.wrtctrl.ui.nav.RoutersRoute
+import com.vknxworks.wrtctrl.ui.setup.AccessSummary
+import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vknxworks.wrtctrl.ui.components.Group
 import com.vknxworks.wrtctrl.ui.components.GroupRow
@@ -72,9 +76,9 @@ fun YouScreen() {
     val context = LocalContext.current
     val c = context.container
     val nav = LocalNavigator.current
-    val routers by c.routerStore.routers.collectAsStateWithLifecycle()
-    val activeId by c.routerStore.activeId.collectAsStateWithLifecycle()
-    val server = routers.firstOrNull { it.id == activeId }
+    val active by c.sessions.active.collectAsStateWithLifecycle()
+    val access by c.sessions.access.collectAsStateWithLifecycle()
+    val server = active?.router
     fun open(url: String) {
         try {
             com.vknxworks.wrtctrl.data.lock.AppLock.expectReturn()
@@ -144,13 +148,29 @@ fun YouScreen() {
 
             if (server != null) {
                 Group {
+                    GroupRow(
+                        stringResource(R.string.routers_title),
+                        stringResource(R.string.routers_subtitle),
+                        icon = Icons.Outlined.SwapHoriz,
+                        showChevron = true,
+                        onClick = { nav.navigate(RoutersRoute) },
+                    )
                     GroupSwitch(
                         stringResource(R.string.read_only_mode),
                         stringResource(R.string.read_only_mode_subtitle),
                         checked = server.readOnly,
                         icon = Icons.Outlined.Visibility,
-                    ) { on -> c.routerStore.update(server.id) { it.copy(readOnly = on) } }
+                    ) { c.sessions.setReadOnly(server.id, it) }
                 }
+                access.error?.let { e ->
+                    Text(
+                        errorMessage(context, e, server.host),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = CtrlColors.Error,
+                        modifier = Modifier.padding(horizontal = Gutter, vertical = 4.dp),
+                    )
+                }
+                if (!access.loading && access.error == null) AccessSummary(access.acl)
             }
 
             Group {

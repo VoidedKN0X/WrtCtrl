@@ -8,7 +8,7 @@ WrtCtrl is an Android app for [OpenWrt](https://openwrt.org): a fast, touch-firs
 
 Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 
-> **Early development.** WrtCtrl 0.1.0 is the app's foundation: the Ctrl / Signal design, the app lock, the privacy switches and the four tabs, without router features yet. Router setup and the features below arrive in the next versions; see [CHANGELOG.md](CHANGELOG.md).
+> **Early development.** WrtCtrl 0.2.0 signs in to your router and shows what your login may do; the tabs fill up in the next versions. See [CHANGELOG.md](CHANGELOG.md) for what's in each one.
 
 ## Features
 
@@ -51,13 +51,11 @@ If the Obtainium button doesn't open the app, add `https://github.com/VoidedKN0X
 
 WrtCtrl signs in to rpcd, OpenWrt's ubus login service, like LuCI does. Root works, but a **dedicated login with only the permissions WrtCtrl needs** is safer: if your phone is ever lost, that login can't do anything else on the router.
 
-> **Draft.** The ACLs below follow LuCI's own permissions. They are checked against a real router and finalised together with router setup in the next version.
+The permissions below were checked against OpenWrt 25.12 and LuCI's own permission files. WrtCtrl shows what your login may do when you add the router, and greys out everything else.
 
-### 1. Create the permission files
+### 1. Create the permission file
 
-Pick one. Copy it to the router as `/usr/share/rpcd/acl.d/wrtctrl.json`.
-
-**Read-only**: WrtCtrl can show everything but change nothing.
+Copy this to the router as `/usr/share/rpcd/acl.d/wrtctrl.json`. It holds two profiles: **wrtctrl-read** (look, change nothing) and **wrtctrl-operator** (the changes WrtCtrl makes). Step 2 picks which ones the login gets.
 
 ```json
 {
@@ -68,39 +66,44 @@ Pick one. Copy it to the router as `/usr/share/rpcd/acl.d/wrtctrl.json`.
         "system": [ "board", "info" ],
         "network.interface": [ "dump" ],
         "network.device": [ "status" ],
-        "luci-rpc": [ "getBoardJSON", "getHostHints", "getDHCPLeases", "getNetworkDevices", "getWirelessDevices" ],
-        "iwinfo": [ "devices", "info", "assoclist" ],
+        "luci-rpc": [ "getBoardJSON", "getHostHints", "getDHCPLeases", "getNetworkDevices" ],
+        "luci": [ "getVersion", "getMountPoints", "getInitList" ],
         "rc": [ "list" ],
-        "uci": [ "get", "changes" ]
+        "log": [ "read" ],
+        "uci": [ "get", "changes" ],
+        "file": [ "read", "exec" ]
       },
-      "uci": [ "system", "network", "wireless", "dhcp", "firewall" ]
+      "uci": [ "system", "network", "dhcp", "firewall" ],
+      "file": {
+        "/sys/class/thermal/thermal_zone*/temp": [ "read" ],
+        "/sys/class/thermal/thermal_zone*/type": [ "read" ],
+        "/usr/libexec/package-manager-call list-installed": [ "exec" ],
+        "/usr/libexec/package-manager-call list-available": [ "exec" ]
+      }
     }
-  }
-}
-```
-
-**Operator**: everything in read-only, plus the changes WrtCtrl makes. Put both blocks in the same file.
-
-```json
-{
-  "wrtctrl-read": { "...": "the read-only block above" },
+  },
   "wrtctrl-operator": {
-    "description": "WrtCtrl: changes to Wi-Fi, DHCP, port forwards, services and reboot",
+    "description": "WrtCtrl: DHCP, port forwards, interfaces, services, packages, backup and reboot",
     "write": {
       "ubus": {
         "system": [ "reboot" ],
         "network.interface.*": [ "up", "down" ],
-        "hostapd.*": [ "del_client" ],
         "rc": [ "init" ],
-        "uci": [ "set", "add", "delete", "rename", "order", "apply", "confirm", "rollback", "revert" ]
+        "uci": [ "set", "add", "delete", "rename", "order", "apply", "confirm", "rollback", "revert" ],
+        "file": [ "exec" ]
       },
-      "uci": [ "wireless", "dhcp", "firewall" ]
+      "uci": [ "dhcp", "firewall" ],
+      "file": {
+        "/usr/libexec/package-manager-call update": [ "exec" ],
+        "/usr/libexec/package-manager-call upgrade *": [ "exec" ]
+      },
+      "cgi-io": [ "backup" ]
     }
   }
 }
 ```
 
-The system log, package updates and config backups also need permission to run single programs on the router (`/sbin/logread`, `apk` or `opkg`, `/sbin/sysupgrade`); those entries arrive with the **System** tab.
+`package-manager-call` is LuCI's wrapper around `apk` (or `opkg` on older OpenWrt), so the same permissions work with either. Wi-Fi permissions are added once WrtCtrl manages Wi-Fi.
 
 ### 2. Add the login
 
@@ -120,7 +123,7 @@ config login
 	list write 'wrtctrl-operator'
 ```
 
-For read-only, leave out the `list write` line. Then restart rpcd: `/etc/init.d/rpcd restart`.
+For read-only, leave out the `list write` line. Then restart rpcd: `/etc/init.d/rpcd restart`, and sign in to WrtCtrl with username `wrtctrl` and the password you typed.
 
 ### 3. HTTP or HTTPS
 

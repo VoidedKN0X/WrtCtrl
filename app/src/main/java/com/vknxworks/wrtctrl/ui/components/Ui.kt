@@ -149,11 +149,10 @@ fun TabTitle(
 fun ProfileButton() {
     val nav = LocalNavigator.current
     val c = LocalContext.current.container
-    val routers by c.routerStore.routers.collectAsStateWithLifecycle()
-    val activeId by c.routerStore.activeId.collectAsStateWithLifecycle()
-    val initial = routers.firstOrNull { it.id == activeId }?.initial
-    // The connection state arrives with the ubus client; until then the dot stays off.
-    val connected = false
+    val active by c.sessions.active.collectAsStateWithLifecycle()
+    val access by c.sessions.access.collectAsStateWithLifecycle()
+    val initial = active?.router?.initial
+    val connected = active != null && !access.loading && access.error == null
     val label = stringResource(R.string.you_title)
     Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
         Box(

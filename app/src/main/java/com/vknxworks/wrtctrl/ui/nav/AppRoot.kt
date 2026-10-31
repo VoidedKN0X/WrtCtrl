@@ -59,11 +59,24 @@ import com.vknxworks.wrtctrl.ui.overview.OverviewScreen
 import com.vknxworks.wrtctrl.ui.overview.SystemScreen
 import com.vknxworks.wrtctrl.ui.settings.SettingsScreen
 import com.vknxworks.wrtctrl.ui.settings.YouScreen
+import com.vknxworks.wrtctrl.ui.settings.RoutersScreen
+import com.vknxworks.wrtctrl.ui.setup.SetupScreen
+import com.vknxworks.wrtctrl.container
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.toRoute
 
 @Composable
 fun AppRoot() {
+    val c = LocalContext.current.container
+    val routers by c.sessions.routers.collectAsStateWithLifecycle()
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        MainScaffold()
+        if (routers.isEmpty()) {
+            // First start (or every router removed): setup fills the screen, no tabs.
+            SetupScreen(onDone = {}, onCancel = null)
+        } else {
+            MainScaffold()
+        }
     }
 }
 
@@ -190,5 +203,14 @@ private fun AppNavHost(navController: NavHostController) {
 
         composable<YouRoute> { YouScreen() }
         composable<SettingsRoute> { SettingsScreen() }
+        composable<RoutersRoute> { RoutersScreen() }
+        composable<AddRouterRoute> {
+            val navigator = LocalNavigator.current
+            SetupScreen(onDone = { navController.popBackStack(OverviewRoute, false) }, onCancel = navigator::back)
+        }
+        composable<EditRouterRoute> {
+            val navigator = LocalNavigator.current
+            SetupScreen(editId = it.toRoute<EditRouterRoute>().id, onDone = navigator::back, onCancel = navigator::back)
+        }
     }
 }

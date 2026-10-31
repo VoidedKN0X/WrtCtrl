@@ -13,7 +13,7 @@
     <string name="selected">Selected</string>
     <string name="you_title">You</string>
     <string name="you_not_connected">Not connected</string>
-    <string name="you_not_connected_body">Router setup arrives in the next update.</string>
+    <string name="you_not_connected_body">WrtCtrl is locked, or no router is selected.</string>
     <string name="settings">Settings</string>
     <string name="settings_subtitle">Notifications, warnings and appearance</string>
     <string name="support_title">Support WrtCtrl</string>
@@ -104,13 +104,95 @@
     <string name="tab_clients">Clients</string>
     <string name="tab_network">Network</string>
     <string name="tab_system">System</string>
-    <string name="placeholder_title">Coming next</string>
-    <string name="placeholder_overview">Router status, WAN, live throughput and Wi-Fi radios will show here once router setup is in.</string>
-    <string name="placeholder_clients">Every device on your network, from DHCP leases, host hints, the neighbour table and Wi-Fi, will show here.</string>
+    <string name="placeholder_title">Coming in the next update</string>
+    <string name="placeholder_overview">Router status, WAN, live throughput and the attention list will show here.</string>
+    <string name="placeholder_clients">Every device on your network, from DHCP leases, host hints and the neighbour table, will show here.</string>
     <string name="placeholder_network">Wi-Fi and the guest network, DHCP leases, port forwards and interfaces will show here.</string>
     <string name="placeholder_system">Services, packages, the system log, reboot and config backups will show here.</string>
     <string name="router_not_encrypted">Not encrypted (HTTP)</string>
     <string name="openwrt_version">OpenWrt %1$s</string>
     <string name="overlay_warn_title">Storage warning</string>
     <string name="overlay_warn_subtitle">Flag the router from %1$d%% of its storage (overlay) used</string>
+    <!-- Router setup -->
+    <string name="setup_title">Add your OpenWrt router</string>
+    <string name="setup_intro">WrtCtrl signs in to your router\'s ubus API, the same API LuCI uses. A dedicated login that can only do what the app needs is the safest way in: see the README.</string>
+    <string name="field_address">Address</string>
+    <string name="field_address_hint">192.168.1.1 or https://router.lan</string>
+    <string name="field_name">Name (optional)</string>
+    <string name="field_name_hint">Defaults to the router\'s hostname</string>
+    <string name="field_username">Username</string>
+    <string name="field_username_hint">wrtctrl or root</string>
+    <string name="field_username_note">The rpcd login, the same as for LuCI. A dedicated login with only the permissions WrtCtrl needs is safer than root.</string>
+    <string name="field_password">Password</string>
+    <string name="password_reenter">Type the password again: it\'s only reused for the same address and username.</string>
+    <string name="hide_secret">Hide</string>
+    <string name="show_secret">Show</string>
+    <string name="address_invalid">Enter your router\'s address, like 192.168.1.1 or https://router.lan</string>
+    <string name="address_resolves">Connects to %1$s</string>
+    <string name="address_http_warning">Not encrypted (HTTP), how OpenWrt serves LuCI by default. Fine on your home network or a VPN, risky anywhere else. Use https:// if you set up HTTPS on the router.</string>
+    <string name="connect">Connect</string>
+    <string name="connecting">Connecting…</string>
+    <string name="continue_label">Continue</string>
+    <string name="save_changes">Save</string>
+    <string name="connected_to">Connected to %1$s</string>
+    <string name="read_only_suggest">This login can only look, not change anything, so read-only mode is turned on.</string>
+
+    <!-- Certificates and HTTP -->
+    <string name="cert_title">Trust this certificate?</string>
+    <string name="cert_changed_title">Certificate changed</string>
+    <string name="cert_changed_warning">%1$s now presents a different certificate from the one you trusted. Only continue if you replaced or renewed it yourself.</string>
+    <string name="cert_intro">%1$s uses a certificate your phone doesn\'t know, like the self-signed certificate OpenWrt creates for HTTPS.</string>
+    <string name="cert_check">Check that this SHA-256 fingerprint matches your router\'s (on the router, run: openssl x509 -in /etc/uhttpd.crt -noout -fingerprint -sha256):</string>
+    <string name="cert_issued_to">Issued to: %1$s</string>
+    <string name="cert_pin_note">From now on WrtCtrl only accepts this exact certificate from this router.</string>
+    <string name="cert_trust">Trust</string>
+    <string name="cert_pinned">Trusted certificate (pinned)</string>
+    <string name="cert_system">Certificate trusted by the phone</string>
+    <string name="http_title">Use an unencrypted connection?</string>
+    <string name="http_body">%1$s is an http:// address. Then your router password, your session and everything WrtCtrl shows and changes are sent unencrypted, and anyone on the network can read them. That\'s fine on your home network or a VPN, but risky anywhere else. WrtCtrl only uses HTTP for this address.</string>
+    <string name="http_use">Use HTTP</string>
+
+    <!-- Routers -->
+    <string name="routers_title">Routers</string>
+    <string name="routers_subtitle">Switch, add or remove OpenWrt routers</string>
+    <string name="add_router">Add router</string>
+    <string name="edit_router">Address and sign-in</string>
+    <string name="edit_router_title">Router and sign-in</string>
+    <string name="remove_router">Remove router</string>
+    <string name="remove_router_title">Remove %1$s?</string>
+    <string name="remove_router_body">WrtCtrl forgets this router and deletes its saved password from the phone. Nothing changes on the router itself.</string>
+    <string name="remove">Remove</string>
+    <string name="switch_to">Use this router</string>
+    <string name="active_router">In use</string>
+
+    <!-- What the login may do -->
+    <string name="access_title">What this login can do</string>
+    <string name="access_footer">This comes from the login\'s rpcd permissions (ACL) on the router. Anything it can\'t do is greyed out in the app.</string>
+    <string name="access_none_warning">This login can\'t do anything WrtCtrl needs. Check its permissions in /etc/config/rpcd and /usr/share/rpcd/acl.d (see the README).</string>
+    <string name="allowed">Allowed</string>
+    <string name="not_allowed">Not allowed</string>
+    <string name="cap_status">Router and WAN status</string>
+    <string name="cap_clients">Connected devices</string>
+    <string name="cap_dhcp">Change DHCP and static leases</string>
+    <string name="cap_firewall">Change port forwards and block devices</string>
+    <string name="cap_interfaces">Restart interfaces</string>
+    <string name="cap_services">Start, stop and restart services</string>
+    <string name="cap_logs">Read the system log</string>
+    <string name="cap_packages">Update packages</string>
+    <string name="cap_reboot">Reboot</string>
+
+    <!-- Errors -->
+    <string name="error_unreachable">Can\'t reach %1$s. Check the address and that your phone is on a network that can reach it.</string>
+    <string name="error_untrusted_cert">%1$s uses a certificate your phone doesn\'t trust.</string>
+    <string name="error_cert_unreadable">Couldn\'t read the certificate %1$s presents, so it can\'t be checked. Try again, or check the address.</string>
+    <string name="error_pin_mismatch">%1$s presents a different certificate from the one you trusted. WrtCtrl stopped connecting to protect your sign-in.</string>
+    <string name="error_bad_password">Wrong username or password.</string>
+    <string name="error_forbidden">This login isn\'t allowed to do this. Check its permissions on the router.</string>
+    <string name="error_not_openwrt">%1$s answered, but not like OpenWrt\'s ubus API. Check the address and port: use the one you open LuCI on, not AdGuard Home\'s.</string>
+    <string name="error_ubus">The router returned an error (%1$d).</string>
+    <string name="error_read_only">This router is in read-only mode, so nothing was changed. Turn read-only mode off to make changes.</string>
+    <string name="error_cancelled">Cancelled: the change wasn\'t confirmed with your fingerprint or app PIN.</string>
+    <string name="error_cleartext_blocked">Blocked an unencrypted (HTTP) connection to %1$s. WrtCtrl only uses HTTP for a router address you chose it for.</string>
+    <string name="error_generic">Something went wrong.</string>
+    <string name="error_with_detail">%1$s (%2$s)</string>
 </resources>

@@ -6,6 +6,7 @@ import com.vknxworks.wrtctrl.data.lock.LockPrefs
 import com.vknxworks.wrtctrl.data.lock.LockVault
 import com.vknxworks.wrtctrl.data.router.CleartextPolicy
 import com.vknxworks.wrtctrl.data.router.RouterStore
+import com.vknxworks.wrtctrl.data.router.Sessions
 import com.vknxworks.wrtctrl.data.settings.SettingsRepository
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -61,6 +62,7 @@ class AppContainer(val context: Context) {
     fun backgroundBlocked(): Boolean = sealing() && !vault.isOpen
 
     val routerStore = RouterStore(context, vault, ::sealing)
+    val sessions = Sessions(routerStore, http, appScope, initiallyLocked = sealing())
 
     /** Turns the app lock on with [pin]. [backgroundChecks]: keep notifications and widgets working while locked. */
     suspend fun enableLock(pin: String, backgroundChecks: Boolean) {
@@ -80,6 +82,7 @@ class AppContainer(val context: Context) {
         settings.update { it.copy(lockOnOpen = false, lockChanges = false) }
         vault.disable()
         lockPrefs.backgroundChecks = false
+        sessions.setLocked(false)
     }
 
     /** Switches "Background checks while locked" (only while unlocked, so every login can be re-encrypted). */
@@ -97,15 +100,18 @@ class AppContainer(val context: Context) {
         settings.update { it.copy(lockOnOpen = false, lockChanges = false) }
         vault.disable()
         lockPrefs.backgroundChecks = false
+        sessions.setLocked(false)
     }
 
-    /** Locked: wipe the key from memory. */
+    /** Locked: wipe the key from memory and drop the client that holds the login. */
     fun onLocked() {
         vault.close()
+        if (sealing()) sessions.setLocked(true)
     }
 
     fun onUnlocked() {
         AppLock.markUnlocked()
+        sessions.setLocked(false)
         // Seal any login left unsealed (WrtCtrl stopped between setting up the lock and sealing them).
         if (vault.enabled) appScope.launch(Dispatchers.Default) { runCatching { routerStore.resealAll(sealing()) } }
     }
