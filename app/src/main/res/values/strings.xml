@@ -111,7 +111,6 @@
     <string name="placeholder_system">Services, packages, the system log, reboot and config backups will show here.</string>
     <string name="router_not_encrypted">Not encrypted (HTTP)</string>
     <string name="openwrt_version">OpenWrt %1$s</string>
-    <string name="signed_in_as">Signed in as %1$s</string>
     <string name="overlay_warn_title">Storage warning</string>
     <string name="overlay_warn_subtitle">Flag the router from %1$d%% of its storage (overlay) used</string>
 </resources>
