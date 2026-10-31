@@ -14,4 +14,6 @@
     <color name="signal_widget_track">#FF26262C</color>
     <color name="signal_widget_fill">#FFF4F4F2</color>
     <color name="signal_widget_button">#FF1C1C21</color>
+    <!-- Notification accent: the accent text colour of each theme. -->
+    <color name="notification_accent">#FFB48CFF</color>
 </resources>

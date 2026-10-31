@@ -19,4 +19,6 @@
     <!-- The accent fill is the same in both themes. -->
     <color name="signal_accent">#FFB48CFF</color>
     <color name="signal_on_accent">#FF08080A</color>
+    <!-- Notification accent: the accent text colour of each theme. -->
+    <color name="notification_accent">#FF6A3BDB</color>
 </resources>
