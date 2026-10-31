@@ -43,6 +43,7 @@ import com.vknxworks.wrtctrl.ui.components.Group
 import com.vknxworks.wrtctrl.ui.components.GroupChoice
 import com.vknxworks.wrtctrl.ui.components.GroupRow
 import com.vknxworks.wrtctrl.ui.nav.LocalNavigator
+import com.vknxworks.wrtctrl.ui.nav.NotificationsRoute
 import com.vknxworks.wrtctrl.ui.components.GroupSwitch
 import com.vknxworks.wrtctrl.ui.components.ScreenTopBar
 import kotlinx.coroutines.launch
@@ -58,6 +59,15 @@ fun SettingsScreen() {
     Column(Modifier.fillMaxSize()) {
         ScreenTopBar(stringResource(R.string.settings))
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 24.dp)) {
+            Group(stringResource(R.string.group_notifications)) {
+                GroupRow(
+                    stringResource(R.string.notifications),
+                    stringResource(R.string.notifications_subtitle),
+                    icon = Icons.Outlined.Notifications,
+                    showChevron = true,
+                    onClick = { nav.navigate(NotificationsRoute) },
+                )
+            }
             val lockOn = c.vault.enabled
             val bioAvailable = remember { AppLock.biometricAvailable(context) }
             val bioFailed = stringResource(R.string.lock_fingerprint_failed)
@@ -110,6 +120,12 @@ fun SettingsScreen() {
                         checked = settings.lockChanges,
                         icon = Icons.Outlined.Key,
                     ) { on -> c.appScope.launch { c.settings.update { it.copy(lockChanges = on) } } }
+                    GroupSwitch(
+                        stringResource(R.string.lock_background),
+                        stringResource(R.string.lock_background_subtitle),
+                        checked = c.lockPrefs.backgroundChecks,
+                        icon = Icons.Outlined.Notifications,
+                    ) { on -> c.appScope.launch { c.setBackgroundChecks(on) } }
                 }
                 GroupSwitch(
                     stringResource(R.string.hide_screenshots),

@@ -53,10 +53,22 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.vknxworks.wrtctrl.R
 import com.vknxworks.wrtctrl.ui.components.LocalBottomClearance
-import com.vknxworks.wrtctrl.ui.overview.ClientsScreen
-import com.vknxworks.wrtctrl.ui.overview.NetworkScreen
+import com.vknxworks.wrtctrl.ui.clients.ClientScreen
+import com.vknxworks.wrtctrl.ui.clients.ClientsScreen
+import com.vknxworks.wrtctrl.ui.network.DhcpScreen
+import com.vknxworks.wrtctrl.ui.network.InterfacesScreen
+import com.vknxworks.wrtctrl.ui.network.NetworkScreen
+import com.vknxworks.wrtctrl.ui.network.PortForwardsScreen
+import com.vknxworks.wrtctrl.ui.network.WifiScreen
 import com.vknxworks.wrtctrl.ui.overview.OverviewScreen
-import com.vknxworks.wrtctrl.ui.overview.SystemScreen
+import com.vknxworks.wrtctrl.ui.settings.NotificationsScreen
+import com.vknxworks.wrtctrl.ui.system.LogsScreen
+import com.vknxworks.wrtctrl.ui.system.PackagesScreen
+import com.vknxworks.wrtctrl.ui.system.RebootRequest
+import com.vknxworks.wrtctrl.ui.system.ServicesScreen
+import com.vknxworks.wrtctrl.ui.system.SystemScreen
+import com.vknxworks.wrtctrl.ui.widgets.Shortcuts
+import androidx.compose.runtime.LaunchedEffect
 import com.vknxworks.wrtctrl.ui.settings.SettingsScreen
 import com.vknxworks.wrtctrl.ui.settings.YouScreen
 import com.vknxworks.wrtctrl.ui.settings.RoutersScreen
@@ -104,6 +116,22 @@ private fun MainScaffold() {
             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
             launchSingleTop = true
             restoreState = true
+        }
+    }
+
+    // App shortcuts, the widget and the tile: go to the right tab (the reboot shortcut opens its confirmation).
+    val shortcut by Shortcuts.pending.collectAsStateWithLifecycle()
+    LaunchedEffect(shortcut) {
+        val target = shortcut ?: return@LaunchedEffect
+        Shortcuts.consumed()
+        when (target) {
+            Shortcuts.Target.OVERVIEW -> selectTab(topDestinations.indexOfFirst { it.route == OverviewRoute })
+            Shortcuts.Target.CLIENTS -> selectTab(topDestinations.indexOfFirst { it.route == ClientsRoute })
+            Shortcuts.Target.GUEST -> selectTab(topDestinations.indexOfFirst { it.route == NetworkRoute })
+            Shortcuts.Target.REBOOT -> {
+                selectTab(topDestinations.indexOfFirst { it.route == SystemRoute })
+                RebootRequest.request()
+            }
         }
     }
 
@@ -204,6 +232,15 @@ private fun AppNavHost(navController: NavHostController) {
         composable<YouRoute> { YouScreen() }
         composable<SettingsRoute> { SettingsScreen() }
         composable<RoutersRoute> { RoutersScreen() }
+        composable<NotificationsRoute> { NotificationsScreen() }
+        composable<ClientRoute> { ClientScreen(it.toRoute<ClientRoute>().mac) }
+        composable<WifiRoute> { WifiScreen() }
+        composable<DhcpRoute> { DhcpScreen() }
+        composable<PortForwardsRoute> { PortForwardsScreen() }
+        composable<InterfacesRoute> { InterfacesScreen() }
+        composable<ServicesRoute> { ServicesScreen() }
+        composable<PackagesRoute> { PackagesScreen() }
+        composable<LogsRoute> { LogsScreen() }
         composable<AddRouterRoute> {
             val navigator = LocalNavigator.current
             SetupScreen(onDone = { navController.popBackStack(OverviewRoute, false) }, onCancel = navigator::back)

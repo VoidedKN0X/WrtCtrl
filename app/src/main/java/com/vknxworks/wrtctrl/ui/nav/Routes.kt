@@ -14,3 +14,14 @@ import kotlinx.serialization.Serializable
 @Serializable data object RoutersRoute
 @Serializable data object AddRouterRoute
 @Serializable data class EditRouterRoute(val id: String)
+@Serializable data object NotificationsRoute
+
+// Pushed screens
+@Serializable data class ClientRoute(val mac: String)
+@Serializable data object WifiRoute
+@Serializable data object DhcpRoute
+@Serializable data object PortForwardsRoute
+@Serializable data object InterfacesRoute
+@Serializable data object ServicesRoute
+@Serializable data object PackagesRoute
+@Serializable data object LogsRoute

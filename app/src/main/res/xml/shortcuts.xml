@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher shortcuts (long-press the WrtCtrl icon). They only open WrtCtrl: the app lock asks first,
+     guest Wi-Fi is switched on the Network tab, and Reboot opens its confirmation (type the hostname). -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_clients"
+        android:shortcutId="clients"
+        android:shortcutLongLabel="@string/shortcut_clients_long"
+        android:shortcutShortLabel="@string/shortcut_clients">
+        <intent
+            android:action="com.vknxworks.wrtctrl.CLIENTS"
+            android:targetClass="com.vknxworks.wrtctrl.MainActivity"
+            android:targetPackage="com.vknxworks.wrtctrl" />
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_guest"
+        android:shortcutId="guest"
+        android:shortcutLongLabel="@string/shortcut_guest_long"
+        android:shortcutShortLabel="@string/shortcut_guest">
+        <intent
+            android:action="com.vknxworks.wrtctrl.GUEST_WIFI"
+            android:targetClass="com.vknxworks.wrtctrl.MainActivity"
+            android:targetPackage="com.vknxworks.wrtctrl" />
+    </shortcut>
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_reboot"
+        android:shortcutId="reboot"
+        android:shortcutLongLabel="@string/shortcut_reboot_long"
+        android:shortcutShortLabel="@string/shortcut_reboot">
+        <intent
+            android:action="com.vknxworks.wrtctrl.REBOOT"
+            android:targetClass="com.vknxworks.wrtctrl.MainActivity"
+            android:targetPackage="com.vknxworks.wrtctrl" />
+    </shortcut>
+</shortcuts>

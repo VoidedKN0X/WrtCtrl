@@ -112,7 +112,7 @@ fun RoutersScreen() {
             confirmButton = {
                 TextButton(onClick = {
                     removing = null
-                    c.sessions.remove(router.id)
+                    c.removeRouter(router.id)
                 }) { Text(stringResource(R.string.remove), color = CtrlColors.Error) }
             },
             dismissButton = { TextButton(onClick = { removing = null }) { Text(stringResource(R.string.cancel)) } },

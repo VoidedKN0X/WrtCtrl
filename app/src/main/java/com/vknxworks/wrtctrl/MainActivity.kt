@@ -1,5 +1,6 @@
 package com.vknxworks.wrtctrl
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.compose.setContent
@@ -23,6 +24,11 @@ import com.vknxworks.wrtctrl.ui.theme.isSystemDark
 import com.vknxworks.wrtctrl.ui.theme.signalBarStyle
 import com.vknxworks.wrtctrl.ui.components.WindowPrivacy
 import com.vknxworks.wrtctrl.ui.components.LocalAppCovered
+import com.vknxworks.wrtctrl.ui.components.ApplyDialog
+import com.vknxworks.wrtctrl.ui.widgets.Shortcuts
+import com.vknxworks.wrtctrl.data.widgets.WidgetData
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 /** A FragmentActivity (not just a ComponentActivity) because the fingerprint prompt needs one. */
 class MainActivity : FragmentActivity() {
@@ -32,8 +38,17 @@ class MainActivity : FragmentActivity() {
         // Secure from the first frame (the lock is still being checked); lifted below once it's known.
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         isSystemDark().let { dark -> enableEdgeToEdge(statusBarStyle = signalBarStyle(dark), navigationBarStyle = signalBarStyle(dark)) }
+        // An app shortcut, the widget or the tile; not again when the activity is recreated (rotation).
+        if (savedInstanceState == null) runCatching { Shortcuts.handle(intent) }
         val c = container
         AppLock.attach(this, c)
+        // Widgets and the tile show fresh data after the app was opened, and their refresh keeps running.
+        lifecycleScope.launch {
+            runCatching {
+                WidgetData.schedule(applicationContext)
+                if (WidgetData.anyWidgets(applicationContext)) WidgetData.refreshSoon(applicationContext)
+            }
+        }
         setContent {
             val settings by c.settings.settings.collectAsStateWithLifecycle()
             val lock by AppLock.state.collectAsStateWithLifecycle()
@@ -57,6 +72,8 @@ class MainActivity : FragmentActivity() {
                     // instead of staying on top of it (where they could still be tapped).
                     CompositionLocalProvider(LocalAppCovered provides (covered || closing)) {
                         Box(if (hidden) Modifier.fillMaxSize().clearAndSetSemantics { } else Modifier.fillMaxSize()) { AppRoot() }
+                        // Every configuration change: saving, the rollback countdown and the outcome.
+                        if (lock == AppLock.State.UNLOCKED) ApplyDialog()
                     }
                     CompositionLocalProvider(LocalAppCovered provides closing) {
                         if (lock == AppLock.State.UNLOCKED) {
@@ -70,5 +87,12 @@ class MainActivity : FragmentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        // MainActivity can be opened by other apps: an intent that can't be read is ignored.
+        runCatching { Shortcuts.handle(intent) }
     }
 }

@@ -4,6 +4,49 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v1.0.0 (2026-10-31)
+
+WrtCtrl is complete: everything you do with your OpenWrt router from the phone, with every risky change protected by OpenWrt's rollback. It includes 0.1.0 and 0.2.0, which were never released on their own.
+
+**Copy the permission file from the README to your router again** (and restart rpcd): 1.0 needs more permissions than 0.2 for Wi-Fi, the neighbour table, package updates, blocking devices and backups. WrtCtrl greys out whatever your login can't do.
+
+### New
+
+- **Overview.** Your router's hostname, OpenWrt version and uptime; WAN download and upload speeds with a live graph while the screen is open; CPU, memory and storage (overlay) cards; the WAN card with its public IP (read from the router itself), gateway, DNS, uptime and IPv6; the Wi-Fi radios; router details (model, target, kernel, load, temperature, swap); and **Needs a look** for the WAN down, a radio off, memory or storage over your warning level, package updates and unapplied changes. Pull down to refresh.
+- **Clients.** Every device the router knows, merged from DHCP leases, host hints, the neighbour table and every Wi-Fi network's connected devices: name, IP addresses, MAC address with its vendor (looked up on the phone in a built-in list of about 40,000 vendors; private Wi-Fi addresses are marked as such), wired or Wi-Fi with band, signal and rate, online state and lease expiry. Search, sort by name, IP, online or signal, and filter by online, wired or Wi-Fi band.
+- **A page for every device** with its addresses and connection, signal and rate graphs while it's open, data use (with nlbwmon), and:
+  - **Make the lease static** with an IP address and hostname you can change, or change and remove an existing static lease.
+  - **Disconnect from Wi-Fi** (it can't rejoin for a minute).
+  - **Block from the internet**: a firewall rule that keeps it on your local network but off the internet, and **Allow the internet again**.
+  - **Wake up** with Wake-on-LAN (with etherwake).
+  - **Nickname and notes**, kept on the phone only.
+  - **Open in AdCtrl** when AdCtrl is installed, for DNS filtering (WrtCtrl doesn't duplicate it).
+- **Network tab** with a **Guest Wi-Fi** switch (when the router has a guest network) and:
+  - **Wi-Fi**: every radio and network with on/off switches, band, channel, width, power and encryption, and changing a network's name or password after a strong warning.
+  - **DHCP**: active leases, static leases (add, change, delete) and the address pools.
+  - **Port forwards**: list, add, change, delete, and switch them on or off, with checks on ports (single or ranges) and the device address.
+  - **Interfaces**: state, addresses, traffic and errors, and restarting one (the LAN and WAN need their name typed).
+- **System tab**:
+  - **Services**: running and starting at boot, with start, stop, restart, reload, and start at boot on or off. Stopping or restarting asks first, with an extra warning for services like network, firewall, dnsmasq and AdGuard Home.
+  - **Packages**: updates through apk (or opkg on older OpenWrt), refreshing the package lists, upgrading selected packages or all of them after a warning (with an extra one for core packages), and the package manager's output.
+  - **System log** with search and filters for the kernel, dnsmasq, hostapd and errors, refreshing every 5 seconds.
+  - **Download config backup** (the same archive as LuCI's) to a file you choose.
+  - **Optional packages**: nlbwmon, etherwake and collectd, what each one adds, and installing one after you confirm.
+  - **Reboot**, after typing the router's hostname.
+- **Changes are applied with rollback.** Every Wi-Fi, DHCP and firewall change is applied the way LuCI does it: WrtCtrl shows **Confirm changes within 30 s** with a countdown, waits a moment for services to restart, and confirms once it can still reach the router. If the change cut the phone off, the router puts the old settings back by itself when the countdown runs out. **Undo now** puts them back at once.
+- **Notifications** from WrtCtrl's own background checks (every 15 to 120 minutes): router unreachable (after two missed checks), WAN down, WAN back up with its address, a new device, and once a day the package updates. Each one can be switched off, **Check now** runs a check at once, and the lock screen only shows that something needs a look.
+- **Push through ntfy**: anything that posts to WrtCtrl's push address starts a check right away. The README has hotplug scripts for the router that push when the WAN goes down or up and when a device gets a DHCP lease.
+- **Home screen widget**: WAN status, WAN throughput, online devices and the WAN address. Tap it to open WrtCtrl.
+- **Quick Settings tile**: guest Wi-Fi on or off, applied with rollback. With **Confirm changes** on, in read-only mode or while WrtCtrl is locked, it opens WrtCtrl instead.
+- **App shortcuts**: Clients, Guest Wi-Fi and Reboot (which still asks for the hostname).
+- **Background checks while locked** under **Settings › Privacy and security**, so notifications, the widget and the tile keep working with the app lock on.
+
+### Security
+
+- Every change is checked against the login's rpcd permissions and the router's read-only mode before anything is sent, and **Confirm changes** asks for your PIN or fingerprint first.
+- Removing a router also removes its notifications, its last check and your device nicknames and notes from the phone.
+- The Wi-Fi password dialog is kept out of screenshots and the recent-apps view.
+
 ## v0.2.0 (2026-10-31)
 
 WrtCtrl now signs in to your OpenWrt router. It includes everything from 0.1.0, which was never released on its own. The four tabs still show what's coming; they fill up in the next versions.

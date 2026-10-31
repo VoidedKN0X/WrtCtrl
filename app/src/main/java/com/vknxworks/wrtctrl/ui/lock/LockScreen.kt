@@ -166,9 +166,10 @@ private suspend fun awaitOnScreen(lifecycle: Lifecycle, windowInfo: WindowInfo) 
 }
 
 /** Background checks stay on when they're in use (notifications or widgets), so turning the lock on doesn't silently stop them. */
-// Notifications and widgets arrive in later versions; until then nothing runs in the background.
-@Suppress("UNUSED_PARAMETER", "RedundantSuspendModifier")
-private suspend fun defaultBackgroundChecks(c: AppContainer): Boolean = false
+private suspend fun defaultBackgroundChecks(c: AppContainer): Boolean {
+    val n = c.notifySettings.current()
+    return n.polling || n.push || com.vknxworks.wrtctrl.data.widgets.WidgetData.anyWidgets(c.context)
+}
 
 @Composable
 private fun LegacyLockedScreen(activity: FragmentActivity) {

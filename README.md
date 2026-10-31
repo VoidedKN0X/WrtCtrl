@@ -8,17 +8,15 @@ WrtCtrl is an Android app for [OpenWrt](https://openwrt.org): a fast, touch-firs
 
 Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 
-> **Early development.** WrtCtrl 0.2.0 signs in to your router and shows what your login may do; the tabs fill up in the next versions. See [CHANGELOG.md](CHANGELOG.md) for what's in each one.
-
 ## Features
 
 - **Overview**: model, OpenWrt version, kernel, uptime, load, CPU, memory, temperature and storage; WAN status, public IP (read from the router itself), gateway, DNS and IPv6; a live WAN throughput graph; Wi-Fi radios; and an attention list for WAN down, a radio off, low memory, storage almost full, package updates and unapplied changes
-- **Clients**: every device on your network, from DHCP leases, host hints, the neighbour table and Wi-Fi, with vendor (from a list built into the app, no online lookup), connection type, signal and lease expiry. Make a lease static, disconnect a device from Wi-Fi, block it from the internet, or wake it (Wake-on-LAN)
+- **Clients**: every device on your network, from DHCP leases, host hints, the neighbour table and Wi-Fi, with vendor (from a list built into the app, no online lookup), connection type, signal and lease expiry; sort and filter by name, IP, online, band and signal. Each device's page has its signal and rate history, data use (with nlbwmon), and actions: make its lease static, disconnect it from Wi-Fi, block it from the internet, wake it (Wake-on-LAN with etherwake), your own nickname and notes, and **Open in AdCtrl** when AdCtrl is installed
 - **Network**: Wi-Fi networks and a **guest network** switch, DHCP leases and static leases, **port forwards**, and interfaces with their traffic counters
 - **System**: services, package updates (with `apk` or `opkg`, whichever your router has), the system log, reboot and config backups
 - **Changes that could cut you off are undone automatically**: Wi-Fi, interface and firewall changes are applied with OpenWrt's rollback. If WrtCtrl can't reach the router afterwards, the router puts the old settings back by itself
-- **Notifications** through ntfy: router unreachable, WAN down or back up, a new unknown device, and package updates
-- **Quick Settings tile** for the guest network, a **home screen widget** and **app shortcuts**
+- **Notifications**: router unreachable, WAN down or back up, a new device, and a daily package-update digest, from WrtCtrl's own background checks, woken at once by your **self-hosted ntfy** (push from the router's hotplug scripts)
+- **Quick Settings tile** for guest Wi-Fi, a **home screen widget** (WAN status, throughput, online devices) and **app shortcuts** (Clients, Guest Wi-Fi, Reboot)
 - **Several routers**, such as a main router and a dumb access point
 - **App lock** with its own PIN and optional fingerprint unlock, a **read-only mode** per router, certificate pinning, and optional **Hide in screenshots** and **Hide in recent apps**
 
@@ -63,47 +61,160 @@ Copy this to the router as `/usr/share/rpcd/acl.d/wrtctrl.json`. It holds two pr
     "description": "WrtCtrl: read-only access",
     "read": {
       "ubus": {
-        "system": [ "board", "info" ],
-        "network.interface": [ "dump" ],
-        "network.device": [ "status" ],
-        "luci-rpc": [ "getBoardJSON", "getHostHints", "getDHCPLeases", "getNetworkDevices" ],
-        "luci": [ "getVersion", "getMountPoints", "getInitList" ],
-        "rc": [ "list" ],
-        "log": [ "read" ],
-        "uci": [ "get", "changes" ],
-        "file": [ "read", "exec" ]
+        "system": [
+          "board",
+          "info"
+        ],
+        "network.interface": [
+          "dump"
+        ],
+        "network.device": [
+          "status"
+        ],
+        "luci-rpc": [
+          "getBoardJSON",
+          "getHostHints",
+          "getDHCPLeases",
+          "getNetworkDevices",
+          "getWirelessDevices"
+        ],
+        "luci": [
+          "getVersion",
+          "getMountPoints",
+          "getInitList"
+        ],
+        "iwinfo": [
+          "devices",
+          "info",
+          "assoclist"
+        ],
+        "rc": [
+          "list"
+        ],
+        "log": [
+          "read"
+        ],
+        "uci": [
+          "get",
+          "changes"
+        ],
+        "file": [
+          "read",
+          "stat",
+          "exec"
+        ]
       },
-      "uci": [ "system", "network", "dhcp", "firewall" ],
+      "uci": [
+        "system",
+        "network",
+        "wireless",
+        "dhcp",
+        "firewall"
+      ],
       "file": {
-        "/sys/class/thermal/thermal_zone*/temp": [ "read" ],
-        "/sys/class/thermal/thermal_zone*/type": [ "read" ],
-        "/usr/libexec/package-manager-call list-installed": [ "exec" ],
-        "/usr/libexec/package-manager-call list-available": [ "exec" ]
+        "/proc/stat": [
+          "read"
+        ],
+        "/sys/class/thermal/thermal_zone*/temp": [
+          "read"
+        ],
+        "/sys/class/thermal/thermal_zone*/type": [
+          "read"
+        ],
+        "/usr/bin/apk": [
+          "list"
+        ],
+        "/usr/sbin/nlbw": [
+          "list"
+        ],
+        "/usr/bin/etherwake": [
+          "list"
+        ],
+        "/usr/sbin/collectd": [
+          "list"
+        ],
+        "/sbin/ip -4 -j neigh show": [
+          "exec"
+        ],
+        "/sbin/ip -6 -j neigh show": [
+          "exec"
+        ],
+        "/usr/bin/apk list --upgradable": [
+          "exec"
+        ],
+        "/bin/opkg list-upgradable": [
+          "exec"
+        ],
+        "/usr/sbin/nlbw -c json -g mac": [
+          "exec"
+        ]
       }
     }
   },
   "wrtctrl-operator": {
-    "description": "WrtCtrl: DHCP, port forwards, interfaces, services, packages, backup and reboot",
+    "description": "WrtCtrl: Wi-Fi, DHCP, port forwards, blocking, interfaces, services, packages, backup and reboot",
+    "read": {
+      "cgi-io": [
+        "backup"
+      ]
+    },
     "write": {
       "ubus": {
-        "system": [ "reboot" ],
-        "network.interface.*": [ "up", "down" ],
-        "rc": [ "init" ],
-        "uci": [ "set", "add", "delete", "rename", "order", "apply", "confirm", "rollback", "revert" ],
-        "file": [ "exec" ]
+        "system": [
+          "reboot"
+        ],
+        "network.interface.*": [
+          "up",
+          "down"
+        ],
+        "hostapd.*": [
+          "del_client"
+        ],
+        "rc": [
+          "init"
+        ],
+        "uci": [
+          "set",
+          "add",
+          "delete",
+          "rename",
+          "order",
+          "apply",
+          "confirm",
+          "rollback",
+          "revert"
+        ],
+        "file": [
+          "exec"
+        ]
       },
-      "uci": [ "dhcp", "firewall" ],
+      "uci": [
+        "wireless",
+        "dhcp",
+        "firewall"
+      ],
       "file": {
-        "/usr/libexec/package-manager-call update": [ "exec" ],
-        "/usr/libexec/package-manager-call upgrade *": [ "exec" ]
-      },
-      "cgi-io": [ "backup" ]
+        "/usr/libexec/package-manager-call update": [
+          "exec"
+        ],
+        "/usr/libexec/package-manager-call upgrade *": [
+          "exec"
+        ],
+        "/usr/libexec/package-manager-call install *": [
+          "exec"
+        ],
+        "/usr/bin/etherwake -D -i * *": [
+          "exec"
+        ]
+      }
     }
   }
 }
 ```
 
-`package-manager-call` is LuCI's wrapper around `apk` (or `opkg` on older OpenWrt), so the same permissions work with either. Wi-Fi permissions are added once WrtCtrl manages Wi-Fi.
+`package-manager-call` is LuCI's wrapper around `apk` (or `opkg` on older OpenWrt), so the same permissions work with either. The `ip neigh` commands give the neighbour table (who's online), `/proc/stat` the CPU use, and the `list` entries let WrtCtrl see which optional packages are installed. Without Wi-Fi on the router, the Wi-Fi entries simply do nothing.
+
+**Updating from an earlier WrtCtrl version?** Copy this file again: 1.0 needs more permissions than 0.2 (Wi-Fi, the neighbour table, packages, blocking and backups), then run `/etc/init.d/rpcd restart`.
 
 ### 2. Add the login
 
@@ -141,38 +252,48 @@ WrtCtrl checks which of these are installed and only shows what they make possib
 | `etherwake` | **Wake-on-LAN** for wired devices |
 | `luci-app-statistics` (`collectd`) | History graphs beyond the live ones |
 
-## Notifications from the router (ntfy)
+## Notifications
 
-WrtCtrl checks your routers in the background, and can also get a push through [ntfy](https://f-droid.org/packages/io.heckel.ntfy/) the moment something happens on the router. These two small scripts post to an ntfy topic of yours; replace the address with your ntfy server and topic.
+Tap your profile picture › **Settings › Notifications** and turn on **Check in the background** (every 15 to 120 minutes; Android doesn't allow less). WrtCtrl then notifies when a router can't be reached, the WAN goes down or comes back, a new device joins, and once a day when package updates are available. Each kind has its own switch. The checks only read from your routers.
+
+### Push through ntfy (optional)
+
+With [ntfy](https://f-droid.org/packages/io.heckel.ntfy/) connected to your self-hosted ntfy server, the router can wake WrtCtrl the moment something happens instead of waiting for the next check. A push is only a wake-up call: WrtCtrl ignores what it says, checks your routers and notifies about what it finds, at most once a minute.
+
+1. In WrtCtrl: **Settings › Notifications**, turn on **Check in the background** and **Check when ntfy pushes**, then tap **Push address** to copy it. Treat it like a password.
+2. On the router, put the push address in these two hotplug scripts (replace the example address).
 
 **WAN down and back up**, as `/etc/hotplug.d/iface/99-wrtctrl`:
 
 ```sh
 #!/bin/sh
-NTFY='https://ntfy.example.com/your-topic'
+PUSH='https://ntfy.example.com/upAbC123?up=1'
 [ "$INTERFACE" = wan ] || exit 0
 case "$ACTION" in
-  ifup)   msg="WAN is up" ;;
-  ifdown) msg="WAN is down" ;;
-  *) exit 0 ;;
+  ifup|ifdown) uclient-fetch -q -O /dev/null --post-data="wan $ACTION" "$PUSH" ;;
 esac
-uclient-fetch -q -O /dev/null --post-data="$msg" "$NTFY"
 ```
 
-**A new DHCP lease** (a device joined), as `/etc/hotplug.d/dhcp/99-wrtctrl`:
+**A device got a DHCP lease**, as `/etc/hotplug.d/dhcp/99-wrtctrl`:
 
 ```sh
 #!/bin/sh
-NTFY='https://ntfy.example.com/your-topic'
+PUSH='https://ntfy.example.com/upAbC123?up=1'
 [ "$ACTION" = add ] || exit 0
-uclient-fetch -q -O /dev/null --post-data="New device: ${HOSTNAME:-unknown} ($IPADDR, $MACADDR)" "$NTFY"
+uclient-fetch -q -O /dev/null --post-data="lease" "$PUSH"
 ```
 
-`uclient-fetch` is built into OpenWrt; with curl installed, `curl -fsS -d "$msg" "$NTFY" >/dev/null` does the same. A WAN-down message only goes out once the router can reach ntfy again, if your ntfy server is outside your home.
+`uclient-fetch` is built into OpenWrt; with curl installed, `curl -fsS -d check "$PUSH" >/dev/null` does the same. A WAN-down push can only go out once the router reaches your ntfy server again, so if ntfy runs outside your home, WAN down is caught by the regular background check instead. Allow ntfy to run unrestricted in the background (WrtCtrl shows a row for it under **Battery** when it isn't).
+
+## Widget, tile and shortcuts
+
+- **Widget:** add **Router** from your home screen's widget list: WAN status, WAN throughput, online devices and the WAN address of the router you have selected. It refreshes when you open WrtCtrl, with every background check and at least every 30 minutes, and never changes anything.
+- **Quick Settings tile:** **Guest Wi-Fi** switches every guest network of the selected router on or off (applied with rollback). With the app lock's **Confirm changes** on, in read-only mode, or while WrtCtrl is locked, it opens WrtCtrl instead.
+- **App shortcuts** (long-press the icon): **Clients**, **Guest Wi-Fi** (opens the Network tab) and **Reboot** (opens the confirmation; you still type the hostname).
 
 ## Privacy
 
-**Telemetry-free.** WrtCtrl has no analytics, crash reporting, usage stats or tracking of any kind. It only talks to the routers you add, and never reads the name of the Wi-Fi network you're on. Device vendors are looked up in a list built into the app, and your public IP is read from the router itself, so nothing about your network is sent anywhere else. Router passwords are encrypted with the Android Keystore and never written to a log.
+**Telemetry-free.** WrtCtrl has no analytics, crash reporting, usage stats or tracking of any kind. It only talks to the routers you add, and never reads the name of the Wi-Fi network you're on. Device vendors are looked up in a list built into the app ([oui-data](https://github.com/silverwind/oui-data), from the IEEE registry), and your public IP is read from the router itself, so nothing about your network is sent anywhere else. Nicknames and notes for devices stay on the phone. Router passwords are encrypted with the Android Keystore and never written to a log.
 
 - **Links:** the Support, Report a bug, Source code and Licence rows in About open in your browser; the app itself doesn't contact GitHub.
 
@@ -228,6 +349,6 @@ Native Android apps for self-hosted services and everyday tools, all with the sa
 
 WrtCtrl is licensed under the [GNU General Public License v3.0](LICENSE). © VKNXWorks
 
-The bundled fonts are licensed under the SIL Open Font License 1.1: [Space Grotesk](https://github.com/floriankarsten/space-grotesk) (see `FONT-LICENSE-SpaceGrotesk.txt`) and [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) (see `FONT-LICENSE-JetBrainsMono.txt`).
+The bundled vendor list is from [oui-data](https://github.com/silverwind/oui-data) (BSD-2-Clause, see `app/src/main/assets/licenses/oui-data-LICENSE.txt`). The bundled fonts are licensed under the SIL Open Font License 1.1: [Space Grotesk](https://github.com/floriankarsten/space-grotesk) (see `FONT-LICENSE-SpaceGrotesk.txt`) and [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) (see `FONT-LICENSE-JetBrainsMono.txt`).
 
 WrtCtrl is not affiliated with or endorsed by the OpenWrt project. OpenWrt is a registered trademark of Software Freedom Conservancy.

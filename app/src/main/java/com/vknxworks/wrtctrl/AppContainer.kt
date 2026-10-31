@@ -7,6 +7,13 @@ import com.vknxworks.wrtctrl.data.lock.LockVault
 import com.vknxworks.wrtctrl.data.router.CleartextPolicy
 import com.vknxworks.wrtctrl.data.router.RouterStore
 import com.vknxworks.wrtctrl.data.router.Sessions
+import com.vknxworks.wrtctrl.data.router.Changes
+import com.vknxworks.wrtctrl.data.router.ClientNotes
+import com.vknxworks.wrtctrl.data.notify.CheckStore
+import com.vknxworks.wrtctrl.data.notify.Notifier
+import com.vknxworks.wrtctrl.data.notify.NotifySettingsRepository
+import com.vknxworks.wrtctrl.data.widgets.WidgetData
+import com.vknxworks.wrtctrl.data.widgets.WidgetStore
 import com.vknxworks.wrtctrl.data.settings.SettingsRepository
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -64,6 +71,21 @@ class AppContainer(val context: Context) {
     val routerStore = RouterStore(context, vault, ::sealing)
     val sessions = Sessions(routerStore, http, appScope, initiallyLocked = sealing())
 
+    /** Every configuration change goes through here: uci apply with rollback, then confirm. */
+    val changes = Changes()
+
+    val notifySettings = NotifySettingsRepository(context, appScope)
+
+    /** Removes a router and everything WrtCtrl keeps about it on the phone. */
+    fun removeRouter(id: String) {
+        sessions.remove(id)
+        CheckStore.forget(context, id)
+        ClientNotes.forget(context, id)
+        Notifier.cancelRouter(context, id)
+        if (WidgetStore.read(context)?.routerId == id) WidgetStore.clear(context)
+        appScope.launch { runCatching { WidgetData.redraw(context) } }
+    }
+
     /** Turns the app lock on with [pin]. [backgroundChecks]: keep notifications and widgets working while locked. */
     suspend fun enableLock(pin: String, backgroundChecks: Boolean) {
         // Unlocked first, so the lock screen doesn't flash up while the PIN is being saved.
@@ -95,7 +117,13 @@ class AppContainer(val context: Context) {
 
     /** "Forgot PIN?": sealed logins can't be decrypted any more, so remove every router and start over. */
     suspend fun forgetEverything() {
-        withContext(Dispatchers.Default) { routerStore.removeAll() }
+        withContext(Dispatchers.Default) {
+            routerStore.routers.value.forEach { CheckStore.forget(context, it.id); ClientNotes.forget(context, it.id) }
+            routerStore.removeAll()
+        }
+        WidgetStore.clear(context)
+        runCatching { Notifier.cancelAll(context) }
+        runCatching { WidgetData.redraw(context) }
         AppLock.markUnlocked()
         settings.update { it.copy(lockOnOpen = false, lockChanges = false) }
         vault.disable()
@@ -106,7 +134,11 @@ class AppContainer(val context: Context) {
     /** Locked: wipe the key from memory and drop the client that holds the login. */
     fun onLocked() {
         vault.close()
-        if (sealing()) sessions.setLocked(true)
+        if (sealing()) {
+            sessions.setLocked(true)
+            // The widget and the tile now only say that WrtCtrl is locked.
+            appScope.launch { runCatching { WidgetData.redraw(context) } }
+        }
     }
 
     fun onUnlocked() {
