@@ -4,6 +4,14 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v1.0.3 (2026-11-02)
+
+Menus no longer stay on top of the lock screen.
+
+### Security
+
+- **Menus close behind the lock screen.** If you left WrtCtrl with a menu open (such as the ⋮ menu of a service under **System > Services**) and the app locked, that menu stayed visible and could be tapped on top of the lock screen. Start, Reload and Enable could then act on your router without your PIN. Menus are now hidden while WrtCtrl is locked or waiting for **Confirm changes**, and come back after you unlock. Stop, Disable and Restart already asked first and were never reachable this way.
+
 ## v1.0.2 (2026-11-02)
 
 A security update: the Guest Wi-Fi tile always waits for your PIN while WrtCtrl is locked, and the Wi-Fi password dialog stays out of screenshots. Plus a security policy, issue forms and a clearer README.

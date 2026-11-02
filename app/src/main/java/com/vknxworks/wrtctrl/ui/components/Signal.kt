@@ -512,7 +512,9 @@ fun CtrlDropdownMenu(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     DropdownMenu(
-        expanded = expanded,
+        // A menu is its own window above the app: it would stay on top of the lock screen, so it hides
+        // while the app is covered and comes back after unlocking.
+        expanded = expanded && !LocalAppCovered.current,
         onDismissRequest = onDismissRequest,
         modifier = modifier,
         offset = offset,
