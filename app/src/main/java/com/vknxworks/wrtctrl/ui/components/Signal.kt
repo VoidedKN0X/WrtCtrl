@@ -35,10 +35,13 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -68,6 +71,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.vknxworks.wrtctrl.ui.theme.CtrlColors
@@ -487,4 +491,54 @@ val CtrlSheetShape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp)
 @Composable
 fun OnAccent(content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalContentColor provides CtrlColors.OnAccent, content = content)
+}
+
+// ---------- Popup menus ----------
+
+/** Corner radius of popup menus. */
+private val CtrlMenuShape = RoundedCornerShape(16.dp)
+
+/**
+ * A popup menu in the Signal look: flat surface, 16dp corners, a thin card border and no shadow or
+ * tonal tint. Material's default shadow is drawn inside the popup window and shows up as a grey box,
+ * so every menu in the app goes through this. Same parameters and behaviour as material3 [DropdownMenu].
+ */
+@Composable
+fun CtrlDropdownMenu(
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    offset: DpOffset = DpOffset(0.dp, 0.dp),
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismissRequest,
+        modifier = modifier,
+        offset = offset,
+        shape = CtrlMenuShape,
+        containerColor = CtrlColors.Surface,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        border = BorderStroke(1.dp, CtrlColors.Outline),
+        content = content,
+    )
+}
+
+/**
+ * Colours for items in a [CtrlDropdownMenu]: text in the text colour, icons muted, disabled items in
+ * the stopped grey. [destructive] tints the item with the error colour.
+ */
+@Composable
+fun ctrlMenuItemColors(destructive: Boolean = false): MenuItemColors {
+    val text = if (destructive) CtrlColors.Error else CtrlColors.Text
+    val icon = if (destructive) CtrlColors.Error else CtrlColors.Muted
+    return MenuDefaults.itemColors(
+        textColor = text,
+        leadingIconColor = icon,
+        trailingIconColor = icon,
+        disabledTextColor = CtrlColors.Stopped,
+        disabledLeadingIconColor = CtrlColors.Stopped,
+        disabledTrailingIconColor = CtrlColors.Stopped,
+    )
 }

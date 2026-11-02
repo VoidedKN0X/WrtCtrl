@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.MoreVert
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -37,10 +36,12 @@ import com.vknxworks.wrtctrl.data.api.Service
 import com.vknxworks.wrtctrl.data.api.serviceAction
 import com.vknxworks.wrtctrl.data.api.services
 import com.vknxworks.wrtctrl.ui.components.ConfirmDialog
+import com.vknxworks.wrtctrl.ui.components.CtrlDropdownMenu
 import com.vknxworks.wrtctrl.ui.components.CtrlTextField
 import com.vknxworks.wrtctrl.ui.components.ErrorCard
 import com.vknxworks.wrtctrl.ui.components.ScreenTopBar
 import com.vknxworks.wrtctrl.ui.components.activeRouter
+import com.vknxworks.wrtctrl.ui.components.ctrlMenuItemColors
 import com.vknxworks.wrtctrl.ui.components.errorMessage
 import com.vknxworks.wrtctrl.ui.components.rememberRouterData
 import com.vknxworks.wrtctrl.ui.theme.CtrlColors
@@ -100,7 +101,7 @@ fun ServicesScreen() {
                     }
                     if (canAct) {
                         IconButton(onClick = { menu = true }) { Icon(Icons.Outlined.MoreVert, stringResource(R.string.service_actions, s.name)) }
-                        DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                        CtrlDropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                             listOf(
                                 "start" to R.string.service_start,
                                 "restart" to R.string.service_restart,
@@ -108,7 +109,7 @@ fun ServicesScreen() {
                                 "stop" to R.string.service_stop,
                                 (if (s.enabled) "disable" else "enable") to (if (s.enabled) R.string.service_disable else R.string.service_enable),
                             ).forEach { (action, label) ->
-                                DropdownMenuItem(text = { Text(stringResource(label)) }, onClick = {
+                                DropdownMenuItem(text = { Text(stringResource(label)) }, colors = ctrlMenuItemColors(), onClick = {
                                     menu = false
                                     // Anything that stops a service, or keeps it from starting at boot, asks first.
                                     if (action == "stop" || action == "disable" || action == "restart") pending = s to action else doAction(s, action)

@@ -4,6 +4,13 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v1.0.1 (2026-11-02)
+
+### Fixed
+
+- **Popup menus no longer show a grey box.** Menus used Material's default shadow and tonal tint, which Android draws inside the popup window, so they showed a grey, square-ish edge (most visible in light mode). They now use the flat Signal surface (#141417 dark, #FFFFFF light) with 16dp corners, a thin 1dp border in the card border colour (#232328 dark, #DEDED7 light) and no shadow, in both themes. Menu text uses the text colour, icons the muted colour and disabled items the stopped grey.
+- Menus touched: the service actions menu (start, restart, reload, stop, start at boot) on **System > Services**. Every popup menu now goes through one shared `CtrlDropdownMenu`, so new menus get the same look. WrtCtrl has no other popup menus, tooltips or custom popups; dialogs and bottom sheets already used the Signal surface. Nothing else changed.
+
 ## v1.0.0 (2026-10-31)
 
 WrtCtrl is complete: everything you do with your OpenWrt router from the phone, with every risky change protected by OpenWrt's rollback. It includes 0.1.0 and 0.2.0, which were never released on their own.
