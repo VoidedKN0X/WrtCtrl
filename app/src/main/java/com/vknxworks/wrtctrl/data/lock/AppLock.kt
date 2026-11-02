@@ -200,6 +200,18 @@ object AppLock {
         if (SystemClock.elapsedRealtime() - since >= limit) lock()
     }
 
+    /**
+     * Locked, for callers outside the app's screens (the tile): also true once the "Lock again" time has run
+     * out while WrtCtrl sat in the background, which [state] only notices when the app comes back on screen.
+     */
+    fun lockedNow(): Boolean {
+        if (_state.value != State.UNLOCKED) return true
+        val since = backgroundedAt
+        if (since <= 0 || lockTimeoutMs < 0) return false
+        val limit = if (exemptTrip) maxOf(lockTimeoutMs, 5 * 60_000L) else lockTimeoutMs
+        return SystemClock.elapsedRealtime() - since >= limit
+    }
+
     fun lock() {
         val c = container ?: return
         _state.value = State.LOCKED

@@ -10,7 +10,7 @@ A security update: the Guest Wi-Fi tile always waits for your PIN while WrtCtrl 
 
 ### Security
 
-- **The Guest Wi-Fi tile no longer switches anything while WrtCtrl is locked.** With **Background checks while locked** on, a tap on the Quick Settings tile could switch the guest network on or off without your PIN, even though the README promised it opens WrtCtrl while it's locked. Now it always opens WrtCtrl while the app lock is locked, and the app asks for your PIN first. Once WrtCtrl is unlocked, the tile works as before.
+- **The Guest Wi-Fi tile no longer switches anything while WrtCtrl is locked.** With **Background checks while locked** on, a tap on the Quick Settings tile could switch the guest network on or off without your PIN, even though the README promised it opens WrtCtrl while it's locked. Now it always opens WrtCtrl while the app lock is locked, and the app asks for your PIN first. That includes the time after **Lock again** has run out while WrtCtrl was in the background, before you open it again. Once WrtCtrl is unlocked, the tile works as before.
 - **On a locked phone, the tile asks you to unlock the phone first** before it does anything (switching, or opening WrtCtrl).
 - **The Wi-Fi edit dialog (network name and password) is always kept out of screenshots, screen recordings and the Recents preview.** It already asked for this, but a dialog is a window of its own, so on some phones the protection could miss it. The dialog now sets it on its own window, whatever **Hide in screenshots** says.
 

@@ -106,7 +106,8 @@ class GuestWifiTileService : TileService() {
         val router = c.sessions.active.value?.router
         // While WrtCtrl is locked the tile never changes anything by itself (also not with "Background checks
         // while locked" on, when the login can still be read): it opens WrtCtrl, which asks for the PIN first.
-        val appLocked = c.vault.enabled && AppLock.state.value != AppLock.State.UNLOCKED
+        // Also once the "Lock again" time has run out while WrtCtrl was in the background.
+        val appLocked = c.vault.enabled && AppLock.lockedNow()
         val mustOpen = appLocked || c.backgroundBlocked() || router == null || router.readOnly || c.settings.settings.value.lockChanges
         if (mustOpen) {
             openApp()
