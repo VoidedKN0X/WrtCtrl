@@ -14,15 +14,11 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Clients**: every device on your network, from DHCP leases, host hints, the neighbour table and Wi-Fi, with vendor (from a list built into the app, no online lookup), connection type, signal and lease expiry; sort and filter by name, IP, online, band and signal. Each device's page has its signal and rate history, data use (with nlbwmon), and actions: make its lease static, disconnect it from Wi-Fi, block it from the internet, wake it (Wake-on-LAN with etherwake), your own nickname and notes, and **Open in AdCtrl** when AdCtrl is installed
 - **Network**: Wi-Fi networks and a **guest network** switch, DHCP leases and static leases, **port forwards**, and interfaces with their traffic counters
 - **System**: services, package updates (with `apk` or `opkg`, whichever your router has), the system log, reboot and config backups
-- **Changes that could cut you off are undone automatically**: Wi-Fi, interface and firewall changes are applied with OpenWrt's rollback. If WrtCtrl can't reach the router afterwards, the router puts the old settings back by itself
+- **Changes that could cut you off are undone automatically**: Wi-Fi, DHCP and firewall changes (including port forwards and blocking a device) are applied with OpenWrt's rollback. If WrtCtrl can't reach the router afterwards, the router puts the old settings back by itself. Restarting an interface, rebooting and package upgrades can't be rolled back, so WrtCtrl asks first (for the LAN, the WAN and a reboot you type the name to confirm)
 - **Notifications**: router unreachable, WAN down or back up, a new device, and a daily package-update digest, from WrtCtrl's own background checks, woken at once by your **self-hosted ntfy** (push from the router's hotplug scripts)
 - **Quick Settings tile** for guest Wi-Fi, a **home screen widget** (WAN status, throughput, online devices) and **app shortcuts** (Clients, Guest Wi-Fi, Reboot)
 - **Several routers**, such as a main router and a dumb access point
 - **App lock** with its own PIN and optional fingerprint unlock, a **read-only mode** per router, certificate pinning, and optional **Hide in screenshots** and **Hide in recent apps**
-
-## Screenshots
-
-Coming soon.
 
 ## Requirements
 
@@ -32,8 +28,8 @@ Coming soon.
 
 ## Install
 
-1. Download the latest `.apk` file from the [Releases page](https://github.com/VoidedKN0X/WrtCtrl/releases/latest).
-2. Open it on your phone. Android may ask you to allow installing apps from your browser or file manager.
+1. Open the [latest release](https://github.com/VoidedKN0X/WrtCtrl/releases/latest) on your phone. Scroll down to **Assets** and tap the file that ends in `.apk` (for example `WrtCtrl-v1.0.2.apk`). The "Source code" zip and tar.gz files are not the app.
+2. Open the downloaded file. Android may ask you to allow installing apps from your browser or file manager.
 3. Updates install over the old version. Your settings are kept.
 
 **Automatic updates:** on your phone, tap one of the buttons below.
@@ -44,6 +40,29 @@ Coming soon.
 <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/VoidedKN0X/WrtCtrl"><img src=".github/assets/badge_obtainium.png" alt="Get it on Obtainium" height="80"></a> <a href="https://voidedkn0x.github.io/CtrlF-Droid/"><img src=".github/assets/badge_ctrlf-droid.png" alt="Get it from our F-Droid repo" height="80"></a>
 
 If the Obtainium button doesn't open the app, add `https://github.com/VoidedKN0X/WrtCtrl` in Obtainium by hand.
+
+## Is it safe to install?
+
+- **Open source:** all the code is in this repo, under the GPL-3.0 licence.
+- **Built by GitHub Actions, not on a personal computer:** every release on the Releases page is built from this code by [the build workflow](.github/workflows/build.yml), which also checks that no Google library ended up in the app.
+- **Always signed with the same release key.** Android refuses an update signed with a different key, and the CtrlF-Droid repo only accepts APKs signed with this key. Its SHA-256 certificate fingerprint is:
+
+  ```
+  0C:3B:15:A4:11:D7:41:83:BA:F8:06:2B:31:24:29:66:4E:09:22:E4:BC:06:BE:6B:8B:02:65:4A:4E:AD:80:CB
+  ```
+
+  Advanced users can compare it with [AppVerifier](https://github.com/soupslurpr/AppVerifier).
+
+**Permissions**
+
+| Permission | What WrtCtrl uses it for |
+| --- | --- |
+| Internet (`INTERNET`) | Talking to your own routers, and nothing else |
+| Network state (`ACCESS_NETWORK_STATE`) | Waiting for a network before background checks and widget refreshes run. It never reads the Wi-Fi name |
+| Biometrics (`USE_BIOMETRIC`) | Optional fingerprint unlock for the app lock |
+| Notifications (`POST_NOTIFICATIONS`) | Router alerts, only if you turn them on |
+
+Router passwords never leave the phone except to sign in to that router. See [Privacy](#privacy) for more.
 
 ## Recommended router setup
 
@@ -250,7 +269,7 @@ WrtCtrl checks which of these are installed and only shows what they make possib
 | --- | --- |
 | `nlbwmon` | Data use per device on each client's page |
 | `etherwake` | **Wake-on-LAN** for wired devices |
-| `luci-app-statistics` (`collectd`) | History graphs beyond the live ones |
+| `luci-app-statistics` (`collectd`) | Detected and installable from WrtCtrl; history graphs from it are planned (WrtCtrl shows live graphs without it) |
 
 ## Notifications
 
@@ -288,7 +307,7 @@ uclient-fetch -q -O /dev/null --post-data="lease" "$PUSH"
 ## Widget, tile and shortcuts
 
 - **Widget:** add **Router** from your home screen's widget list: WAN status, WAN throughput, online devices and the WAN address of the router you have selected. It refreshes when you open WrtCtrl, with every background check and at least every 30 minutes, and never changes anything.
-- **Quick Settings tile:** **Guest Wi-Fi** switches every guest network of the selected router on or off (applied with rollback). With the app lock's **Confirm changes** on, in read-only mode, or while WrtCtrl is locked, it opens WrtCtrl instead.
+- **Quick Settings tile:** **Guest Wi-Fi** switches every guest network of the selected router on or off (applied with rollback). With the app lock's **Confirm changes** on, in read-only mode, or while WrtCtrl is locked, it opens WrtCtrl instead (and asks for your PIN first).
 - **App shortcuts** (long-press the icon): **Clients**, **Guest Wi-Fi** (opens the Network tab) and **Reboot** (opens the confirmation; you still type the hostname).
 
 ## Privacy
@@ -296,6 +315,10 @@ uclient-fetch -q -O /dev/null --post-data="lease" "$PUSH"
 **Telemetry-free.** WrtCtrl has no analytics, crash reporting, usage stats or tracking of any kind. It only talks to the routers you add, and never reads the name of the Wi-Fi network you're on. Device vendors are looked up in a list built into the app ([oui-data](https://github.com/silverwind/oui-data), from the IEEE registry), and your public IP is read from the router itself, so nothing about your network is sent anywhere else. Nicknames and notes for devices stay on the phone. Router passwords are encrypted with the Android Keystore and never written to a log.
 
 - **Links:** the Support, Report a bug, Source code and Licence rows in About open in your browser; the app itself doesn't contact GitHub.
+
+## How WrtCtrl is made
+
+WrtCtrl is a one-person project by VoidedKN0X (VKNXWorks). Much of the code is written with the help of AI (Claude, by Anthropic). I decide what the app does, review the changes and use the app myself. Every change is listed in the [changelog](CHANGELOG.md), and you can read every line of code here.
 
 ## Build from source
 
@@ -317,7 +340,9 @@ Or open the folder in Android Studio and press **Run** with your phone connected
 
 ## Support the project
 
-WrtCtrl is free and open source. If it's useful to you, you can support development on [GitHub Sponsors](https://github.com/sponsors/VoidedKN0X). Starring the repo and [reporting bugs](https://github.com/VoidedKN0X/WrtCtrl/issues) helps too.
+WrtCtrl is free and open source. If it's useful to you, you can support development on [GitHub Sponsors](https://github.com/sponsors/VoidedKN0X). Starring the repo and [reporting bugs](https://github.com/VoidedKN0X/WrtCtrl/issues/new/choose) (pick **Bug report** or **Feature request**) helps too.
+
+Found a security problem? Please don't open a public issue; see [SECURITY.md](SECURITY.md).
 
 In the app, the **About** section at the bottom of the **You** page (tap your profile picture) has **Support WrtCtrl** and **Report a bug** rows that open these pages.
 
@@ -341,7 +366,9 @@ Native Android apps for self-hosted services and everyday tools, all with the sa
 | [PaperCtrl](https://github.com/VoidedKN0X/PaperCtrl) | Scan and browse documents on Paperless-ngx |
 | [PrintCtrl](https://github.com/VoidedKN0X/PrintCtrl) | Bambu Lab printers through Bambuddy, and Spoolman spools |
 | [ProxCtrl](https://github.com/VoidedKN0X/ProxCtrl) | Manage your Proxmox VE server |
+| [RideCtrl](https://github.com/VoidedKN0X/RideCtrl) | Offline maintenance, fuel and mod log for your vehicles |
 | [SeerrCtrl](https://github.com/VoidedKN0X/SeerrCtrl) | Request movies and shows on Seerr / Jellyseerr |
+| [SynapseCtrl](https://github.com/VoidedKN0X/SynapseCtrl) | Administer your Matrix Synapse server |
 | [TrueCtrl](https://github.com/VoidedKN0X/TrueCtrl) | Monitor and manage your TrueNAS server |
 | **WrtCtrl** (this app) | Manage your OpenWrt router |
 
@@ -351,4 +378,4 @@ WrtCtrl is licensed under the [GNU General Public License v3.0](LICENSE). © VKN
 
 The bundled vendor list is from [oui-data](https://github.com/silverwind/oui-data) (BSD-2-Clause, see `app/src/main/assets/licenses/oui-data-LICENSE.txt`). The bundled fonts are licensed under the SIL Open Font License 1.1: [Space Grotesk](https://github.com/floriankarsten/space-grotesk) (see `FONT-LICENSE-SpaceGrotesk.txt`) and [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) (see `FONT-LICENSE-JetBrainsMono.txt`).
 
-WrtCtrl is not affiliated with or endorsed by the OpenWrt project. OpenWrt is a registered trademark of Software Freedom Conservancy.
+WrtCtrl is an independent app and isn't made by or affiliated with the OpenWrt project. OpenWrt is a registered trademark of Software Freedom Conservancy.

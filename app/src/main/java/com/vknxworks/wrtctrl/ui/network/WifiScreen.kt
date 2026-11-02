@@ -34,6 +34,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.SecureFlagPolicy
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vknxworks.wrtctrl.R
 import com.vknxworks.wrtctrl.container
@@ -177,6 +179,8 @@ private fun WifiEditDialog(iface: WifiIface, currentKey: String, onDismiss: () -
     val keyOk = open || key.length in 8..63
     CtrlDialog(
         onDismissRequest = onDismiss,
+        // A dialog is a window of its own: FLAG_SECURE on the app's window doesn't cover it.
+        properties = DialogProperties(securePolicy = SecureFlagPolicy.SecureOn),
         icon = { Icon(Icons.Outlined.Warning, null, tint = CtrlColors.Warn) },
         title = { Text(stringResource(R.string.wifi_edit_title)) },
         text = {

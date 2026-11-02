@@ -4,6 +4,22 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v1.0.2 (2026-11-02)
+
+A security update: the Guest Wi-Fi tile always waits for your PIN while WrtCtrl is locked, and the Wi-Fi password dialog stays out of screenshots. Plus a security policy, issue forms and a clearer README.
+
+### Security
+
+- **The Guest Wi-Fi tile no longer switches anything while WrtCtrl is locked.** With **Background checks while locked** on, a tap on the Quick Settings tile could switch the guest network on or off without your PIN, even though the README promised it opens WrtCtrl while it's locked. Now it always opens WrtCtrl while the app lock is locked, and the app asks for your PIN first. Once WrtCtrl is unlocked, the tile works as before.
+- **On a locked phone, the tile asks you to unlock the phone first** before it does anything (switching, or opening WrtCtrl).
+- **The Wi-Fi edit dialog (network name and password) is always kept out of screenshots, screen recordings and the Recents preview.** It already asked for this, but a dialog is a window of its own, so on some phones the protection could miss it. The dialog now sets it on its own window, whatever **Hide in screenshots** says.
+
+### Project
+
+- New **SECURITY.md**: how to report a security problem privately (through GitHub's **Report a vulnerability**), what counts, and the SHA-256 fingerprint of the release signing key.
+- New issue forms for bug reports and feature requests, with a reminder to leave out router addresses, passwords and other personal details. Blank issues are off, and security problems point to the private report.
+- README: clearer install steps for first-time GitHub users (which file to tap on the Releases page), a new **Is it safe to install?** section (open source, built by GitHub Actions, signing key fingerprint, every permission explained), **How WrtCtrl is made**, the full Ctrl series list, and the empty Screenshots section removed. Two claims were corrected: interface restarts have no rollback (they ask first instead), and WrtCtrl detects `luci-app-statistics` but doesn't draw its history graphs yet.
+
 ## v1.0.1 (2026-11-02)
 
 ### Fixed

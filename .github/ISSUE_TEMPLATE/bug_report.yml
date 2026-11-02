@@ -1,0 +1,62 @@
+name: Bug report
+description: Something in WrtCtrl doesn't work as it should
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Before you send it, please remove router addresses, passwords, Wi-Fi names and passwords, MAC addresses, push addresses and other personal info from your text and screenshots.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Tap ...
+        3. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+  - type: input
+    id: app-version
+    attributes:
+      label: WrtCtrl version
+      placeholder: Profile picture > About, e.g. 1.0.2
+    validations:
+      required: true
+  - type: input
+    id: android
+    attributes:
+      label: Android version and phone
+      placeholder: Android 15, Pixel 8
+    validations:
+      required: true
+  - type: input
+    id: server-version
+    attributes:
+      label: OpenWrt version
+      placeholder: e.g. 24.10.2 (shown on the Overview)
+  - type: dropdown
+    id: installed-from
+    attributes:
+      label: Installed from
+      options:
+        - GitHub Releases
+        - Obtainium
+        - CtrlF-Droid
+        - Built it myself
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or logs
+      description: Drag images here. Please remove personal info first.

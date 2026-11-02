@@ -8,6 +8,7 @@ import android.service.quicksettings.TileService
 import com.vknxworks.wrtctrl.MainActivity
 import com.vknxworks.wrtctrl.R
 import com.vknxworks.wrtctrl.container
+import com.vknxworks.wrtctrl.data.lock.AppLock
 import com.vknxworks.wrtctrl.data.widgets.WidgetData
 import com.vknxworks.wrtctrl.data.widgets.WidgetStore
 import com.vknxworks.wrtctrl.ui.network.guestNetworks
@@ -50,8 +51,8 @@ object Shortcuts {
 
 /**
  * Quick Settings tile: guest Wi-Fi on or off for the active router. The change is applied with rollback
- * and confirmed, like in the app. It opens WrtCtrl instead of switching when WrtCtrl is locked with the
- * login sealed, when "Confirm changes" is on, in read-only mode, or when the router has no guest network.
+ * and confirmed, like in the app. It opens WrtCtrl instead of switching while WrtCtrl is locked, when
+ * "Confirm changes" is on, in read-only mode, or when the router has no guest network.
  */
 class GuestWifiTileService : TileService() {
 
@@ -92,9 +93,21 @@ class GuestWifiTileService : TileService() {
 
     override fun onClick() {
         super.onClick()
+        // On a locked phone, the phone is unlocked first.
+        if (isLocked) {
+            unlockAndRun { click() }
+            return
+        }
+        click()
+    }
+
+    private fun click() {
         val c = applicationContext.container
         val router = c.sessions.active.value?.router
-        val mustOpen = c.backgroundBlocked() || router == null || router.readOnly || c.settings.settings.value.lockChanges
+        // While WrtCtrl is locked the tile never changes anything by itself (also not with "Background checks
+        // while locked" on, when the login can still be read): it opens WrtCtrl, which asks for the PIN first.
+        val appLocked = c.vault.enabled && AppLock.state.value != AppLock.State.UNLOCKED
+        val mustOpen = appLocked || c.backgroundBlocked() || router == null || router.readOnly || c.settings.settings.value.lockChanges
         if (mustOpen) {
             openApp()
             return
