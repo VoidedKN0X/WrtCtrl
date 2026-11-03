@@ -4,6 +4,12 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Project updates (2026-11-03)
+
+### Project
+
+- **README:** the Ctrl series list now links to ChatCtrl, the Matrix chat app in the series. No app changes, so no new version.
+
 ## v1.0.3 (2026-11-02)
 
 Menus no longer stay on top of the lock screen.
