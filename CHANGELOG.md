@@ -9,6 +9,7 @@ To publish a new version: bump `versionCode` and `versionName` in `app/build.gra
 ### Project
 
 - **README:** the Ctrl series list now links to ChatCtrl, the Matrix chat app in the series. No app changes, so no new version.
+- **README:** the Ctrl series list now includes SumCtrl, the offline calculator, unit converter and work-tools app. No app changes, so no new version.
 
 ## v1.0.3 (2026-11-02)
 
