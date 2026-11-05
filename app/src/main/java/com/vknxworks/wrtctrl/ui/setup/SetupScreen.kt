@@ -1,5 +1,6 @@
 package com.vknxworks.wrtctrl.ui.setup
 
+import com.vknxworks.wrtctrl.ui.components.ShieldScreen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -178,8 +179,10 @@ fun SetupScreen(editId: String? = null, onDone: () -> Unit, onCancel: (() -> Uni
         onDone()
     }
 
-    // The password is typed here: never in screenshots or Recents.
+    // The password is typed here: never in screenshots or Recents, no floating windows over it, and
+    // hidden from apps that misuse accessibility.
     SecureScreen()
+    ShieldScreen()
 
     // An http:// address accepted here but not saved is forgotten on leaving; a saved one stays allowed.
     DisposableEffect(Unit) {

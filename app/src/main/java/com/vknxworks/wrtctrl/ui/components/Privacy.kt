@@ -34,6 +34,41 @@ object ScreenPrivacy {
 
     internal fun acquire() { forced++ }
     internal fun release() { forced = (forced - 1).coerceAtLeast(0) }
+
+    /**
+     * Screens that hide other apps' floating windows while they show (PIN entry and change, passwords,
+     * keys, "can't be undone" confirmations). Counted, so nested screens can't clear it early.
+     */
+    var shielded by mutableIntStateOf(0)
+        private set
+
+    /** Views marked as sensitive for accessibility services, with how many screens asked for it. */
+    private val sensitiveViews = java.util.WeakHashMap<android.view.View, Int>()
+
+    internal fun shield() { shielded++ }
+    internal fun unshield() { shielded = (shielded - 1).coerceAtLeast(0) }
+
+    /**
+     * Only accessibility services that are real accessibility tools (screen readers, switch access) can
+     * read [view] and everything in it while it's marked. Android 14+.
+     */
+    internal fun markSensitive(view: android.view.View) {
+        if (android.os.Build.VERSION.SDK_INT < 34) return
+        val n = sensitiveViews[view] ?: 0
+        sensitiveViews[view] = n + 1
+        if (n == 0) runCatching { view.setAccessibilityDataSensitive(android.view.View.ACCESSIBILITY_DATA_SENSITIVE_YES) }
+    }
+
+    internal fun unmarkSensitive(view: android.view.View) {
+        if (android.os.Build.VERSION.SDK_INT < 34) return
+        val n = sensitiveViews[view] ?: return
+        if (n > 1) {
+            sensitiveViews[view] = n - 1
+        } else {
+            sensitiveViews.remove(view)
+            runCatching { view.setAccessibilityDataSensitive(android.view.View.ACCESSIBILITY_DATA_SENSITIVE_AUTO) }
+        }
+    }
 }
 
 /** Keeps FLAG_SECURE on for as long as the calling screen is shown. */
@@ -68,4 +103,39 @@ fun copySensitive(context: Context, label: String, text: String) {
         description.extras = PersistableBundle().apply { putBoolean(ClipDescription.EXTRA_IS_SENSITIVE, true) }
     }
     context.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(clip)
+}
+
+/**
+ * While the calling screen is shown: other apps' floating windows are hidden (so none can sit over a PIN
+ * pad, a key field or a confirm button), and with [sensitive] the window it's in is hidden from
+ * accessibility services that aren't real accessibility tools. Call it inside a dialog's content to
+ * cover that dialog's window.
+ */
+@Composable
+fun ShieldScreen(sensitive: Boolean = true) {
+    val view = androidx.compose.ui.platform.LocalView.current
+    DisposableEffect(view, sensitive) {
+        ScreenPrivacy.shield()
+        if (sensitive) ScreenPrivacy.markSensitive(view)
+        // Inside a dialog: its own window hides floating windows too, not only the activity's behind it.
+        val dialogWindow = (view.parent as? androidx.compose.ui.window.DialogWindowProvider)?.window
+        dialogWindow?.let { runCatching { it.setHideOverlayWindows(true) } }
+        onDispose {
+            ScreenPrivacy.unshield()
+            if (sensitive) ScreenPrivacy.unmarkSensitive(view)
+            dialogWindow?.let { runCatching { it.setHideOverlayWindows(false) } }
+        }
+    }
+}
+
+/**
+ * Hides other apps' floating windows (chat heads, overlays) over [activity] while [hide] is true; the rest
+ * of the time they work as usual. Needs HIDE_OVERLAY_WINDOWS, which Android grants at install.
+ */
+@Composable
+fun OverlayShield(activity: android.app.Activity, hide: Boolean) {
+    DisposableEffect(hide) {
+        runCatching { activity.window.setHideOverlayWindows(hide) }
+        onDispose { }
+    }
 }

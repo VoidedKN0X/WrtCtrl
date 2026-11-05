@@ -1,5 +1,6 @@
 package com.vknxworks.wrtctrl.ui.lock
 
+import com.vknxworks.wrtctrl.ui.components.ShieldScreen
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -173,6 +174,7 @@ private suspend fun defaultBackgroundChecks(c: AppContainer): Boolean {
 
 @Composable
 private fun LegacyLockedScreen(activity: FragmentActivity) {
+    ShieldScreen()
     var error by remember { mutableStateOf<String?>(null) }
     fun unlock() = AppLock.legacyAuthenticate(activity) { error = it }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -331,6 +333,7 @@ private fun PinLockScreen(activity: FragmentActivity) {
 /** "Confirm changes": the fingerprint or the PIN before something changes on a router. */
 @Composable
 private fun ConfirmChangeScreen(activity: FragmentActivity, onResult: (Boolean) -> Unit) {
+    ShieldScreen()
     val c = LocalContext.current.container
     val vault = c.vault
     val scope = rememberCoroutineScope()
@@ -561,6 +564,8 @@ private fun PinPadScreen(
     onFingerprint: (() -> Unit)? = null,
     bottom: @Composable () -> Unit,
 ) {
+    // No floating windows over the PIN pad, and hidden from apps that misuse accessibility.
+    ShieldScreen()
     val haptics = LocalHapticFeedback.current
     Surface(Modifier.fillMaxSize(), color = CtrlColors.Background) {
         Column(

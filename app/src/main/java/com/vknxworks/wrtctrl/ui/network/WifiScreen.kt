@@ -1,5 +1,6 @@
 package com.vknxworks.wrtctrl.ui.network
 
+import com.vknxworks.wrtctrl.ui.components.ShieldScreen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -184,6 +185,8 @@ private fun WifiEditDialog(iface: WifiIface, currentKey: String, onDismiss: () -
         icon = { Icon(Icons.Outlined.Warning, null, tint = CtrlColors.Warn) },
         title = { Text(stringResource(R.string.wifi_edit_title)) },
         text = {
+            // Inside the dialog, so its own window is shielded too.
+            ShieldScreen()
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(stringResource(R.string.wifi_edit_warning), color = CtrlColors.Warn, style = MaterialTheme.typography.bodyMedium)
                 CtrlTextField(

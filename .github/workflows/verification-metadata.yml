@@ -36,7 +36,21 @@ jobs:
         # key, which resolves the same dependencies as the signed build.
         run: |
           chmod +x gradlew
-          rm -f gradle/verification-metadata.xml
+          # Start from a file with only the settings: sha256 checksums (no PGP), and Android Studio's
+          # -sources/-javadoc jars trusted. Gradle adds every artifact the build downloads.
+          cat > gradle/verification-metadata.xml <<'XML'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <verification-metadata xmlns="https://schema.gradle.org/dependency-verification" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://schema.gradle.org/dependency-verification https://schema.gradle.org/dependency-verification/dependency-verification-1.3.xsd">
+             <configuration>
+                <verify-metadata>true</verify-metadata>
+                <verify-signatures>false</verify-signatures>
+                <trusted-artifacts>
+                   <trust file=".*-javadoc[.]jar" regex="true"/>
+                   <trust file=".*-sources[.]jar" regex="true"/>
+                </trusted-artifacts>
+             </configuration>
+          </verification-metadata>
+          XML
           env -u CI -u GITHUB_ACTIONS ./gradlew --no-daemon --write-verification-metadata sha256 assembleRelease assembleDebug :app:dependencies --configuration releaseRuntimeClasspath > /dev/null
 
       - name: Print verification metadata

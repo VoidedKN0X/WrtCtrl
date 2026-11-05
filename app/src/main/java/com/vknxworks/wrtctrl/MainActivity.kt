@@ -1,5 +1,6 @@
 package com.vknxworks.wrtctrl
 
+import com.vknxworks.wrtctrl.ui.components.OverlayShield
 import android.content.Intent
 import android.os.Bundle
 import android.view.WindowManager
@@ -59,6 +60,8 @@ class MainActivity : FragmentActivity() {
             // shows a blank card (a preview there would show your routers without the PIN).
             val secure = settings.hideScreenshots || covered || ScreenPrivacy.forced > 0
             WindowPrivacy(this, secure, hideRecents = settings.hideRecents || c.vault.enabled || AppLock.legacy)
+            // No other app's floating window over the lock, PIN, password and confirm screens.
+            OverlayShield(this, covered || ScreenPrivacy.shielded > 0)
             // Bars in the background colour, icons light in dark mode and dark in light mode.
             SignalSystemBars(this)
             WrtCtrlTheme(settings.theme, settings.dynamicColor) {

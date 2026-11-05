@@ -52,6 +52,8 @@ If the Obtainium button doesn't open the app, add `https://github.com/VoidedKN0X
   ```
 
   Advanced users can compare it with [AppVerifier](https://github.com/soupslurpr/AppVerifier).
+- **Checksum:** each release's notes list the APK's SHA-256. Compare it with `sha256sum WrtCtrl-v*.apk`.
+- **Built by this repo:** every release APK has a signed build provenance attestation. With the [GitHub CLI](https://cli.github.com), `gh attestation verify WrtCtrl-v1.0.6.apk -R VoidedKN0X/WrtCtrl` proves it was built by this repo's workflow from the tagged commit.
 
 **Permissions**
 
@@ -60,6 +62,7 @@ If the Obtainium button doesn't open the app, add `https://github.com/VoidedKN0X
 | Internet (`INTERNET`) | Talking to your own routers, and nothing else |
 | Network state (`ACCESS_NETWORK_STATE`) | Waiting for a network before background checks and widget refreshes run. It never reads the Wi-Fi name |
 | Biometrics (`USE_BIOMETRIC`) | Optional fingerprint unlock for the app lock, and for **Confirm changes** |
+| Hide other apps' floating windows (`HIDE_OVERLAY_WINDOWS`) | Hide other apps' floating windows over the PIN screen: while the lock, PIN, a password or key, or a confirmation shows, no chat head or overlay can sit on top of it. Granted at install, no prompt; overlays work as usual everywhere else |
 | Notifications (`POST_NOTIFICATIONS`) | Router alerts, only if you turn them on |
 | Run at startup (`RECEIVE_BOOT_COMPLETED`) | Putting the background checks and widget refreshes back on schedule after the phone restarts. Added by Android's background work library (WorkManager) |
 | Keep awake (`WAKE_LOCK`) | Keeping the phone awake for the few seconds a background check or widget refresh runs. Added by WorkManager |
@@ -366,6 +369,8 @@ You need [Android Studio](https://developer.android.com/studio), or JDK 17 and t
 3. The APK is in `app/build/outputs/apk/debug/`. Copy it to your phone and install it.
 
 Or open the folder in Android Studio and press **Run** with your phone connected.
+
+**Dependency verification:** Gradle checks every library and plugin it downloads against the SHA-256 checksums in `gradle/verification-metadata.xml` and refuses anything that doesn't match. When you add or update a dependency or plugin, run the **Dependency verification metadata** workflow (Actions tab, *Run workflow*), copy the file from its log (between the BEGIN/END markers, gzipped and base64-encoded), check the diff and commit it in the same push.
 
 ## Support the project
 

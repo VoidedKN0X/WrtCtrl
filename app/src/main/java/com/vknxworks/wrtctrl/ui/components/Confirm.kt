@@ -43,6 +43,8 @@ fun TypedConfirmDialog(
     icon: ImageVector = Icons.Outlined.Warning,
     extra: (@Composable () -> Unit)? = null,
 ) {
+    // No other app's floating window can cover the question or trick a tap onto the confirm button.
+    ShieldScreen(sensitive = false)
     var typed by remember { mutableStateOf("") }
     val matches = typed.trim() == expected
     CtrlDialog(
@@ -92,6 +94,8 @@ fun ConfirmDialog(
     danger: Boolean = true,
     icon: ImageVector? = null,
 ) {
+    // No other app's floating window can cover the question or trick a tap onto the confirm button.
+    ShieldScreen(sensitive = false)
     CtrlDialog(
         onDismissRequest = onDismiss,
         icon = if (icon != null) {

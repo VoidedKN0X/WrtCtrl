@@ -4,6 +4,21 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v1.0.6 (2026-11-05)
+
+A security update. Nothing changes in how WrtCtrl works.
+
+### Security
+
+- **No other app's floating window over the PIN and confirmation screens.** While the lock screen, PIN entry or change, "Forgot PIN?", **Confirm changes**, the router sign-in, the Wi-Fi password editor or a "can't be undone" question is showing, Android hides other apps' floating windows (chat heads, screen filters, overlays), so none can cover the screen or trick you into tapping the wrong button. They come back as soon as that screen closes and work as usual everywhere else. This uses Android's "hide other apps' floating windows" permission, which is granted at install without a prompt.
+- **PIN and password screens are hidden from apps that misuse accessibility** (Android 14 and newer). Real accessibility tools such as TalkBack still read them; other apps with accessibility access can't see the PIN pad, the router password or the Wi-Fi password fields.
+- **Stricter intent matching** (Android 16 and newer). Other apps can only start WrtCtrl through the actions it declares. The launcher, the three long-press shortcuts (Clients, Guest Wi-Fi, Reboot), the widget, the Quick Settings tile and push from ntfy work as before.
+
+### Project
+
+- **Verified dependencies:** every library and plugin the build downloads is now checked against SHA-256 checksums in the repo, and the build stops if anything doesn't match.
+- **Provable releases:** from this release on, the release notes list the APK's SHA-256, and each APK has a signed build provenance attestation from GitHub. The README's "Is it safe to install?" section shows how to check both.
+
 ## Project updates (2026-11-05)
 
 Changes to how the app is built and released. Nothing changes in the app.
