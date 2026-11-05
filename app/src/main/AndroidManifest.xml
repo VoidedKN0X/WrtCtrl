@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.HIDE_OVERLAY_WINDOWS" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- androidx.biometric adds the old fingerprint permission, which only Android 8 and older use. WrtCtrl needs
-         Android 13, where USE_BIOMETRIC above is what the fingerprint unlock uses, so it's removed. -->
+         Android 15, where USE_BIOMETRIC above is what the fingerprint unlock uses, so it's removed. -->
     <uses-permission android:name="android.permission.USE_FINGERPRINT" tools:node="remove" />
     <!-- WorkManager adds the foreground-service permission for long jobs shown as a notification. The background
          checks and widget refreshes are short jobs that never run as a foreground service, so it's removed (with

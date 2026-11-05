@@ -50,17 +50,15 @@ object ScreenPrivacy {
 
     /**
      * Only accessibility services that are real accessibility tools (screen readers, switch access) can
-     * read [view] and everything in it while it's marked. Android 14+.
+     * read [view] and everything in it while it's marked.
      */
     internal fun markSensitive(view: android.view.View) {
-        if (android.os.Build.VERSION.SDK_INT < 34) return
         val n = sensitiveViews[view] ?: 0
         sensitiveViews[view] = n + 1
         if (n == 0) runCatching { view.setAccessibilityDataSensitive(android.view.View.ACCESSIBILITY_DATA_SENSITIVE_YES) }
     }
 
     internal fun unmarkSensitive(view: android.view.View) {
-        if (android.os.Build.VERSION.SDK_INT < 34) return
         val n = sensitiveViews[view] ?: return
         if (n > 1) {
             sensitiveViews[view] = n - 1

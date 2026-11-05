@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Binder
-import android.os.Build
 import android.os.IBinder
 import com.vknxworks.wrtctrl.R
 import com.vknxworks.wrtctrl.container
@@ -125,7 +124,7 @@ object Push {
 /**
  * Receives what ntfy hands over: the push address, registration errors and wake-up messages. Exported
  * because ntfy is another app, so every broadcast must carry the secret token of WrtCtrl's registration or
- * it's ignored: the token is what keeps other apps out. From Android 14 a broadcast from a sender that
+ * it's ignored: the token is what keeps other apps out. A broadcast from a sender that
  * identifies itself as an app other than ntfy is dropped too. A message's content is never shown or
  * used: it only starts the background check, which reads from your own routers.
  */
@@ -133,11 +132,9 @@ class PushReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val token = intent.getStringExtra(UnifiedPush.EXTRA_TOKEN) ?: return
         if (token != UnifiedPush.token(context)) return
-        if (Build.VERSION.SDK_INT >= 34) {
-            // Only rejects senders that identify as another app; anonymous ones get through to the token check.
-            val sender = sentFromPackage
-            if (sender != null && sender != UnifiedPush.NTFY) return
-        }
+        // Only rejects senders that identify as another app; anonymous ones get through to the token check.
+        val sender = sentFromPackage
+        if (sender != null && sender != UnifiedPush.NTFY) return
         val app = context.applicationContext
         when (intent.action) {
             UnifiedPush.ACTION_NEW_ENDPOINT -> {

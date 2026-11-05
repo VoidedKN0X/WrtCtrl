@@ -135,12 +135,7 @@ class GuestWifiTileService : TileService() {
         val intent = Intent(this, MainActivity::class.java)
             .setAction(Shortcuts.ACTION_GUEST)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-        if (android.os.Build.VERSION.SDK_INT >= 34) {
-            val pi = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-            runCatching { startActivityAndCollapse(pi) }
-        } else {
-            @Suppress("DEPRECATION")
-            runCatching { startActivityAndCollapse(intent) }
-        }
+        val pi = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        runCatching { startActivityAndCollapse(pi) }
     }
 }
