@@ -4,6 +4,26 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v1.0.4 (2026-11-05)
+
+A privacy and security check-up: two permissions fewer, the app lock's timeout now also covers the widget, the tile and the background checks, and a README that lists every permission and everything WrtCtrl connects to.
+
+### Security
+
+- **The "Lock again" time now also counts while WrtCtrl isn't on screen.** With **Lock again** set to 1, 5 or 15 minutes or 1 hour, WrtCtrl only noticed the time had run out once you opened it again. Until then the key that unlocks your router logins stayed in memory, the widget kept showing your router and the background checks kept signing in, even with **Background checks while locked** off. The widget, the Quick Settings tile and the background checks now check the time first: once it has run out, WrtCtrl locks straight away, the logins are sealed with your PIN again, and the widget and the tile only say that WrtCtrl is locked.
+- **Your ntfy push address stays out of screenshots.** While **Settings › Notifications** shows the push address (which works like a password), the page is kept out of screenshots, screen recordings and the recent apps preview, whatever **Hide in screenshots** is set to.
+
+### Privacy
+
+- **Two permissions fewer.** WrtCtrl no longer has the old "use fingerprint hardware" permission, which only Android 8 and older use (fingerprint unlock keeps working through the biometric permission), or the "run foreground service" permission, which Android's background work library added for long jobs that show a notification. WrtCtrl's background checks and widget refreshes are short jobs that never need it, so it's gone together with the library's unused foreground service. Notifications, the widget, the tile and push through ntfy work exactly as before.
+- **Fewer log messages:** release builds now also strip debug and info log messages from the libraries WrtCtrl uses (WrtCtrl itself writes nothing to the system log).
+
+### Project
+
+- README: the permissions table now lists every permission the app has, with what each one is for (including the ones Android's background work library adds), and the Privacy section lists everything WrtCtrl connects to (only your routers) and every link it can open. A new **App lock** section explains the PIN, fingerprint unlock, **Lock again**, **Confirm changes**, **Background checks while locked** and which screens are always kept out of screenshots.
+- README: the Ctrl series list now shows all 28 apps, with CallCtrl, ClockCtrl, ContactCtrl, DateCtrl, LijnCtrl, MailCtrl, RecorderCtrl and TextCtrl added.
+- The build now checks that the Gradle wrapper in the repo is an official Gradle release before building, and `.gitignore` also keeps `google-services.json` out of the repo.
+
 ## Project updates (2026-11-03)
 
 ### Project

@@ -28,7 +28,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 
 ## Install
 
-1. Open the [latest release](https://github.com/VoidedKN0X/WrtCtrl/releases/latest) on your phone. Scroll down to **Assets** and tap the file that ends in `.apk` (for example `WrtCtrl-v1.0.2.apk`). The "Source code" zip and tar.gz files are not the app.
+1. Open the [latest release](https://github.com/VoidedKN0X/WrtCtrl/releases/latest) on your phone. Scroll down to **Assets** and tap the file that ends in `.apk` (for example `WrtCtrl-v1.0.4.apk`). The "Source code" zip and tar.gz files are not the app.
 2. Open the downloaded file. Android may ask you to allow installing apps from your browser or file manager.
 3. Updates install over the old version. Your settings are kept.
 
@@ -59,8 +59,12 @@ If the Obtainium button doesn't open the app, add `https://github.com/VoidedKN0X
 | --- | --- |
 | Internet (`INTERNET`) | Talking to your own routers, and nothing else |
 | Network state (`ACCESS_NETWORK_STATE`) | Waiting for a network before background checks and widget refreshes run. It never reads the Wi-Fi name |
-| Biometrics (`USE_BIOMETRIC`) | Optional fingerprint unlock for the app lock |
+| Biometrics (`USE_BIOMETRIC`) | Optional fingerprint unlock for the app lock, and for **Confirm changes** |
 | Notifications (`POST_NOTIFICATIONS`) | Router alerts, only if you turn them on |
+| Run at startup (`RECEIVE_BOOT_COMPLETED`) | Putting the background checks and widget refreshes back on schedule after the phone restarts. Added by Android's background work library (WorkManager) |
+| Keep awake (`WAKE_LOCK`) | Keeping the phone awake for the few seconds a background check or widget refresh runs. Added by WorkManager |
+
+`DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` is an internal permission Android adds to every app built for Android 13 and newer; it lets WrtCtrl keep its own broadcasts private. WrtCtrl has no location, camera, microphone, contacts, storage or foreground-service permission, and can't read the name of your Wi-Fi network.
 
 Router passwords never leave the phone except to sign in to that router. See [Privacy](#privacy) for more.
 
@@ -310,11 +314,36 @@ uclient-fetch -q -O /dev/null --post-data="lease" "$PUSH"
 - **Quick Settings tile:** **Guest Wi-Fi** switches every guest network of the selected router on or off (applied with rollback). With the app lock's **Confirm changes** on, in read-only mode, or while WrtCtrl is locked, it opens WrtCtrl instead (and asks for your PIN first).
 - **App shortcuts** (long-press the icon): **Clients**, **Guest Wi-Fi** (opens the Network tab) and **Reboot** (opens the confirmation; you still type the hostname).
 
+## App lock
+
+Turn it on: tap your profile picture › **Settings › Privacy and security › App lock**. It's off until you turn it on.
+
+- **Its own app PIN** of 6 to 12 digits, separate from your phone's screen lock. Very obvious PINs such as 111111 or 123456 are refused.
+- **Unlock with fingerprint** (optional) only accepts strong biometrics, such as the fingerprint sensor, checked by the phone's secure hardware. Face unlock that only uses the camera isn't accepted. The PIN is still needed after the phone restarts and at least every 72 hours, and adding a new fingerprint to the phone turns fingerprint unlock off until you turn it on again.
+- **Your router logins are encrypted with the PIN while WrtCtrl is locked.** The key only exists in memory while the app is unlocked and is wiped the moment it locks, and nothing is sent to your routers until you unlock. The PIN itself is never stored: it's stretched with 600,000 rounds of PBKDF2 and mixed with a key held in the phone's secure hardware, so a copy of the app's files isn't enough to guess it on a computer.
+- **Wrong PINs:** after 5 tries you wait 30 seconds, doubling up to 15 minutes. Restarting the app or the phone, or changing the clock, doesn't skip the wait.
+- **Lock again:** as soon as you leave the app (the default), after 1, 5 or 15 minutes or 1 hour away, or only when the app restarts. Opening a link or Android's settings from WrtCtrl doesn't count as leaving, unless you stay away for more than 5 minutes. Once the time has run out, the widget, the Quick Settings tile and the background checks treat WrtCtrl as locked straight away, without waiting for you to open it again.
+- **Change app PIN** asks for your current PIN first, and turning the app lock off asks for the PIN too.
+- **Forgot your PIN?** It can't be recovered, because it encrypts your router logins. The lock screen offers to remove your routers from the phone, so you can add them again; nothing changes on your routers.
+- **Confirm changes** (optional) asks for your fingerprint or app PIN before anything that changes a router: Wi-Fi, DHCP, port forwards, services, reboots and upgrades. One confirmation covers the next minute.
+- **The Quick Settings tile** never switches anything while WrtCtrl is locked: it opens WrtCtrl, which asks for your PIN first. With **Confirm changes** on it always opens WrtCtrl. **App shortcuts** and the widget only open WrtCtrl, behind the lock screen; the Reboot shortcut then still asks you to type the hostname.
+- **Background checks while locked** (optional): notifications, the widget and the tile keep working while WrtCtrl is locked, but your router logins are then only encrypted with the Android Keystore, as without the app lock. Leave it off to keep them sealed with your PIN; the widget then only says that WrtCtrl is locked.
+
+**Hide in screenshots** and **Hide in recent apps** (in the same section, also without the app lock, both off by default): the first keeps WrtCtrl out of screenshots and screen recordings (and blanks its recent-apps preview), the second shows a blank card for WrtCtrl in the recent-apps view while screenshots still work. With the app lock on, the recent-apps view always shows a blank card. Signing in to a router, the Wi-Fi password dialog, your ntfy push address, the lock screen and the PIN screens are always kept out of screenshots, and a copied push address is marked as sensitive so it doesn't show in clipboard previews.
+
 ## Privacy
 
-**Telemetry-free.** WrtCtrl has no analytics, crash reporting, usage stats or tracking of any kind. It only talks to the routers you add, and never reads the name of the Wi-Fi network you're on. Device vendors are looked up in a list built into the app ([oui-data](https://github.com/silverwind/oui-data), from the IEEE registry), and your public IP is read from the router itself, so nothing about your network is sent anywhere else. Nicknames and notes for devices stay on the phone. Router passwords are encrypted with the Android Keystore and never written to a log.
+**Telemetry-free and Google-free.** WrtCtrl has no analytics, crash reporting, usage stats, ads or tracking of any kind, no update checks, and no Google libraries or services. It never reads the name of the Wi-Fi network you're on. Device vendors are looked up in a list built into the app ([oui-data](https://github.com/silverwind/oui-data), from the IEEE registry), and your public IP is read from the router itself, so nothing about your network is sent anywhere else. Nicknames and notes for devices stay on the phone. Router passwords are encrypted with the Android Keystore and never written to a log, and nothing is included in Android backups or moved to a new phone.
 
-- **Links:** the Support, Report a bug, Source code and Licence rows in About open in your browser; the app itself doesn't contact GitHub.
+Everything WrtCtrl connects to:
+
+- **Your OpenWrt routers**, at exactly the address you entered for each one. Redirects are never followed, plain HTTP only goes to a router you allowed it for, and a self-signed certificate is only accepted when it's the exact one you confirmed for that router.
+- **Nothing else.** With push turned on, the ntfy app on your phone delivers wake-up calls to WrtCtrl; WrtCtrl itself never connects to your ntfy server.
+
+Links that open in your browser only when you tap them (the app itself doesn't contact these sites):
+
+- **About:** Support (GitHub Sponsors), Report a bug and Source code (github.com), and Licence (gnu.org).
+- **Install ntfy** on the Notifications page (f-droid.org).
 
 ## How WrtCtrl is made
 
@@ -355,21 +384,29 @@ Native Android apps for self-hosted services and everyday tools, all with the sa
 | [AdCtrl](https://github.com/VoidedKN0X/AdCtrl) | Control your AdGuard Home DNS server |
 | [ArrCtrl](https://github.com/VoidedKN0X/ArrCtrl) | Radarr, Sonarr, Prowlarr, Bazarr, qBittorrent, autobrr and Cleanuparr in one app |
 | [BeamCtrl](https://github.com/VoidedKN0X/BeamCtrl) | TV remote for phones with an IR blaster |
+| [CallCtrl](https://github.com/VoidedKN0X/CallCtrl) | Phone app: dialer, call history and in-call screen |
 | [ChatCtrl](https://github.com/VoidedKN0X/ChatCtrl) | Matrix chat client for matrix.org and self-hosted Synapse |
+| [ClockCtrl](https://github.com/VoidedKN0X/ClockCtrl) | Alarms, timers, stopwatch and world clock |
+| [ContactCtrl](https://github.com/VoidedKN0X/ContactCtrl) | Contacts: browse, edit, import and export |
 | [CraftyCtrl](https://github.com/VoidedKN0X/CraftyCtrl) | Manage Minecraft servers on Crafty Controller |
+| [DateCtrl](https://github.com/VoidedKN0X/DateCtrl) | Calendar for the calendars on your phone and your accounts |
 | [FilesCtrl](https://github.com/VoidedKN0X/FilesCtrl) | File manager with NFS, SMB, SFTP, FTP and WebDAV |
 | [FrigateCtrl](https://github.com/VoidedKN0X/FrigateCtrl) | Watch and review your Frigate NVR cameras |
 | [ImmichCtrl](https://github.com/VoidedKN0X/ImmichCtrl) | Photos and backup for your Immich server |
 | [JellyCtrl](https://github.com/VoidedKN0X/JellyCtrl) | Movies, shows, music and Live TV from Jellyfin |
+| [LijnCtrl](https://github.com/VoidedKN0X/LijnCtrl) | Live De Lijn bus and tram departures |
+| [MailCtrl](https://github.com/VoidedKN0X/MailCtrl) | Email for Gmail and Proton Mail |
 | [MemoCtrl](https://github.com/VoidedKN0X/MemoCtrl) | Notes on your Memos server |
 | [NaviCtrl](https://github.com/VoidedKN0X/NaviCtrl) | Music player for Navidrome servers |
 | [PaperCtrl](https://github.com/VoidedKN0X/PaperCtrl) | Scan and browse documents on Paperless-ngx |
 | [PrintCtrl](https://github.com/VoidedKN0X/PrintCtrl) | Bambu Lab printers through Bambuddy, and Spoolman spools |
 | [ProxCtrl](https://github.com/VoidedKN0X/ProxCtrl) | Manage your Proxmox VE server |
+| [RecorderCtrl](https://github.com/VoidedKN0X/RecorderCtrl) | Private, offline voice recorder |
 | [RideCtrl](https://github.com/VoidedKN0X/RideCtrl) | Offline maintenance, fuel and mod log for your vehicles |
 | [SeerrCtrl](https://github.com/VoidedKN0X/SeerrCtrl) | Request movies and shows on Seerr / Jellyseerr |
 | [SumCtrl](https://github.com/VoidedKN0X/SumCtrl) | Offline calculator, unit converter and work tools |
 | [SynapseCtrl](https://github.com/VoidedKN0X/SynapseCtrl) | Administer your Matrix Synapse server |
+| [TextCtrl](https://github.com/VoidedKN0X/TextCtrl) | Private SMS and MMS messaging |
 | [TrueCtrl](https://github.com/VoidedKN0X/TrueCtrl) | Monitor and manage your TrueNAS server |
 | **WrtCtrl** (this app) | Manage your OpenWrt router |
 

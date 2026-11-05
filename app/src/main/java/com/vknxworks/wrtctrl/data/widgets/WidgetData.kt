@@ -19,6 +19,7 @@ import com.vknxworks.wrtctrl.data.api.UbusJson
 import com.vknxworks.wrtctrl.data.api.deviceStats
 import com.vknxworks.wrtctrl.data.api.interfaces
 import com.vknxworks.wrtctrl.data.api.wan
+import com.vknxworks.wrtctrl.data.lock.AppLock
 import com.vknxworks.wrtctrl.data.router.loadClients
 import com.vknxworks.wrtctrl.ui.network.guestNetworks
 import com.vknxworks.wrtctrl.ui.widgets.GuestWifiTileService
@@ -83,6 +84,8 @@ object WidgetData {
     suspend fun refresh(context: Context) = lock.withLock {
         val app = context.applicationContext
         val c = app.container
+        // Away for longer than the "Lock again" time: lock now, so sealed logins aren't used and the widget says it's locked.
+        withContext(Dispatchers.Main) { AppLock.lockIfExpired() }
         if (c.backgroundBlocked()) {
             redraw(app)
             return@withLock

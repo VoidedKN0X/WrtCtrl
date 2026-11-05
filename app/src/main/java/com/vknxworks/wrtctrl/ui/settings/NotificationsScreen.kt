@@ -58,6 +58,7 @@ import com.vknxworks.wrtctrl.ui.components.GroupChoice
 import com.vknxworks.wrtctrl.ui.components.GroupRow
 import com.vknxworks.wrtctrl.ui.components.GroupSwitch
 import com.vknxworks.wrtctrl.ui.components.ScreenTopBar
+import com.vknxworks.wrtctrl.ui.components.SecureScreen
 import com.vknxworks.wrtctrl.ui.components.copySensitive
 import com.vknxworks.wrtctrl.ui.components.relativeTime
 import com.vknxworks.wrtctrl.ui.components.rememberNotificationAccess
@@ -185,6 +186,8 @@ fun NotificationsScreen() {
                         }
                         is PushStatus.Unavailable -> Note(stringResource(R.string.push_unavailable)) {}
                         is PushStatus.Registered -> {
+                            // The push address works like a password: keep this screen out of screenshots while it shows.
+                            SecureScreen()
                             GroupRow(
                                 stringResource(R.string.push_endpoint),
                                 st.endpoint,

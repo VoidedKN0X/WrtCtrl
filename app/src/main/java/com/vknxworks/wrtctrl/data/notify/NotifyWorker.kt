@@ -14,6 +14,7 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.vknxworks.wrtctrl.container
 import com.vknxworks.wrtctrl.data.api.UbusJson
+import com.vknxworks.wrtctrl.data.lock.AppLock
 import com.vknxworks.wrtctrl.data.widgets.WidgetData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,6 +64,8 @@ class NotifyWorker(context: Context, params: WorkerParameters) : CoroutineWorker
         val c = applicationContext.container
         val notify = c.notifySettings.current()
         if (!notify.polling && !inputData.getBoolean(KEY_FORCE, false)) return Result.success()
+        // Away for longer than the "Lock again" time: lock now, so logins sealed by the app lock aren't used.
+        withContext(Dispatchers.Main) { AppLock.lockIfExpired() }
         if (c.backgroundBlocked()) return Result.success()
         val checker = Checker(applicationContext)
         for (router in c.routerStore.routers.value) {

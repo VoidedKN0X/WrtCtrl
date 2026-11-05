@@ -212,6 +212,17 @@ object AppLock {
         return SystemClock.elapsedRealtime() - since >= limit
     }
 
+    /**
+     * Locks now when WrtCtrl has been away for longer than the "Lock again" time. Leaving the app only notes
+     * the time and [onForeground] locks when it comes back on screen, so the widget, the tile and the
+     * background checks, which work without WrtCtrl on screen, call this first. Main thread only.
+     */
+    fun lockIfExpired() {
+        val c = container ?: return
+        if (!settingsLoaded || !configured(c) || _state.value != State.UNLOCKED || startedActivities > 0) return
+        if (lockedNow()) lock()
+    }
+
     fun lock() {
         val c = container ?: return
         _state.value = State.LOCKED

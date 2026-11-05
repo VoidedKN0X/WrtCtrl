@@ -6,6 +6,13 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- androidx.biometric adds the old fingerprint permission, which only Android 8 and older use. WrtCtrl needs
+         Android 13, where USE_BIOMETRIC above is what the fingerprint unlock uses, so it's removed. -->
+    <uses-permission android:name="android.permission.USE_FINGERPRINT" tools:node="remove" />
+    <!-- WorkManager adds the foreground-service permission for long jobs shown as a notification. The background
+         checks and widget refreshes are short jobs that never run as a foreground service, so it's removed (with
+         WorkManager's foreground service below). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
 
     <queries>
         <!-- ntfy, the only push app WrtCtrl uses. -->
@@ -95,6 +102,10 @@
                 android:value="false" />
         </service>
 
+        <!-- WorkManager's foreground service, for long jobs shown as a notification. WrtCtrl never uses it. -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            tools:node="remove" />
         <!-- WorkManager's diagnostics hook (only for adb dumps) isn't needed in the app. -->
         <receiver
             android:name="androidx.work.impl.diagnostics.DiagnosticsReceiver"

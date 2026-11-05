@@ -13,3 +13,10 @@
 -dontwarn org.openjsse.**
 
 -dontwarn javax.annotation.**
+
+# Release builds drop verbose, debug and info log calls (WrtCtrl itself logs nothing; this also covers libraries).
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+}

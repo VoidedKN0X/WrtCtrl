@@ -36,6 +36,7 @@ import androidx.glance.unit.ColorProvider
 import com.vknxworks.wrtctrl.MainActivity
 import com.vknxworks.wrtctrl.R
 import com.vknxworks.wrtctrl.container
+import com.vknxworks.wrtctrl.data.lock.AppLock
 import com.vknxworks.wrtctrl.data.widgets.WidgetData
 import com.vknxworks.wrtctrl.data.widgets.WidgetSnapshot
 import com.vknxworks.wrtctrl.data.widgets.WidgetStore
@@ -46,6 +47,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Ctrl / Signal colours for the widget (colour resources with a values-night variant). */
 private object WidgetColors {
@@ -71,6 +73,8 @@ private fun openApp(context: Context): Intent =
 /** Home-screen widget: WAN status, WAN throughput and online clients of the active router. Tap opens WrtCtrl. */
 class RouterWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
+        // Away for longer than the "Lock again" time: lock first, so the widget doesn't keep showing the router.
+        withContext(Dispatchers.Main) { AppLock.lockIfExpired() }
         val locked = context.container.backgroundBlocked()
         val snapshot = if (locked) null else WidgetStore.read(context)
         provideContent { WidgetContent(snapshot, locked) }

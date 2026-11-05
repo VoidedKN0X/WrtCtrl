@@ -58,6 +58,8 @@ class GuestWifiTileService : TileService() {
 
     override fun onStartListening() {
         super.onStartListening()
+        // Away for longer than the "Lock again" time: WrtCtrl counts as locked now, not only once it's opened again.
+        AppLock.lockIfExpired()
         draw()
         // Fresh state in the background; the tile redraws when it's in.
         val c = applicationContext.container
