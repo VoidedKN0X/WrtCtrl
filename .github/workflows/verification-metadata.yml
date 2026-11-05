@@ -32,15 +32,12 @@ jobs:
           cache-disabled: true
 
       - name: Write verification metadata
-        # No signing key here: the release build falls back to the debug key outside CI, which
-        # resolves the same dependencies as the signed build.
-        env:
-          CI: "false"
-          GITHUB_ACTIONS: "false"
+        # No signing key here: without CI/GITHUB_ACTIONS the release build falls back to the debug
+        # key, which resolves the same dependencies as the signed build.
         run: |
           chmod +x gradlew
           rm -f gradle/verification-metadata.xml
-          ./gradlew --no-daemon --write-verification-metadata sha256 assembleRelease assembleDebug :app:dependencies --configuration releaseRuntimeClasspath > /dev/null
+          env -u CI -u GITHUB_ACTIONS ./gradlew --no-daemon --write-verification-metadata sha256 assembleRelease assembleDebug :app:dependencies --configuration releaseRuntimeClasspath > /dev/null
 
       - name: Print verification metadata
         run: |
