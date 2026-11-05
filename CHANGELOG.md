@@ -4,6 +4,14 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v1.0.5 (2026-11-05)
+
+A small security update. Nothing changes in how WrtCtrl works.
+
+### Security
+
+- **Other apps can no longer poke WrtCtrl's start-up profile.** An AndroidX library added a receiver that lets other apps ask WrtCtrl to write or skip its start-up performance profile. WrtCtrl doesn't need it, so it's removed.
+
 ## v1.0.4 (2026-11-05)
 
 A privacy and security check-up: two permissions fewer, the app lock's timeout now also covers the widget, the tile and the background checks, and a README that lists every permission and everything WrtCtrl connects to.

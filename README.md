@@ -28,7 +28,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 
 ## Install
 
-1. Open the [latest release](https://github.com/VoidedKN0X/WrtCtrl/releases/latest) on your phone. Scroll down to **Assets** and tap the file that ends in `.apk` (for example `WrtCtrl-v1.0.4.apk`). The "Source code" zip and tar.gz files are not the app.
+1. Open the [latest release](https://github.com/VoidedKN0X/WrtCtrl/releases/latest) on your phone. Scroll down to **Assets** and tap the file that ends in `.apk` (for example `WrtCtrl-v1.0.5.apk`). The "Source code" zip and tar.gz files are not the app.
 2. Open the downloaded file. Android may ask you to allow installing apps from your browser or file manager.
 3. Updates install over the old version. Your settings are kept.
 

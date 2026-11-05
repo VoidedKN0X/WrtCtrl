@@ -110,6 +110,11 @@
         <receiver
             android:name="androidx.work.impl.diagnostics.DiagnosticsReceiver"
             tools:node="remove" />
+        <!-- AndroidX's profile installer receiver lets other apps ask WrtCtrl to write or skip its
+             ART profile; it isn't needed, so leave it out. -->
+        <receiver
+            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+            tools:node="remove" />
         <!-- Don't let androidx.emoji2 look up a downloadable emoji font at start-up: emoji are drawn with the
              phone's own emoji font, and nothing is fetched. -->
         <provider
