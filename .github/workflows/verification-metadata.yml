@@ -1,0 +1,49 @@
+name: Dependency verification metadata
+
+# Run by hand after a dependency or plugin changes: it writes gradle/verification-metadata.xml
+# (sha256 of every library and plugin the build downloads) and prints it to the log, gzipped and
+# base64-encoded between the BEGIN/END markers. Check the diff and commit the new file in the same
+# push as the dependency change, or the normal build fails verification.
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
+
+      - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
+        with:
+          cache-disabled: true
+
+      - name: Write verification metadata
+        # No signing key here: the release build falls back to the debug key outside CI, which
+        # resolves the same dependencies as the signed build.
+        env:
+          CI: "false"
+          GITHUB_ACTIONS: "false"
+        run: |
+          chmod +x gradlew
+          rm -f gradle/verification-metadata.xml
+          ./gradlew --no-daemon --write-verification-metadata sha256 assembleRelease assembleDebug :app:dependencies --configuration releaseRuntimeClasspath > /dev/null
+
+      - name: Print verification metadata
+        run: |
+          echo "----- BEGIN VERIFICATION METADATA -----"
+          gzip -9c gradle/verification-metadata.xml | base64 -w 76
+          echo "----- END VERIFICATION METADATA -----"

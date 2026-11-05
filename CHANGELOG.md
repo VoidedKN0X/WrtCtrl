@@ -4,6 +4,15 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Project updates (2026-11-05)
+
+Changes to how the app is built and released. Nothing changes in the app.
+
+- **Every release is now provable.** From the next release on, each APK gets a signed build provenance attestation from GitHub, showing it was built by this repo's workflow from the tagged commit, and the release notes list the APK's SHA-256 checksum.
+- **The build workflows are audited.** A new check runs [zizmor](https://docs.zizmor.sh) on every workflow change, and every workflow now starts with no permissions and gives each job only what it needs.
+- **Code scanning.** CodeQL now analyses the app's code every week and on every app change; results go to the repo's Security tab.
+- **Groundwork for verified dependencies:** a manually started workflow writes the checksums of every library and plugin the build downloads, so the build can refuse anything that doesn't match.
+
 ## v1.0.5 (2026-11-05)
 
 A small security update. Nothing changes in how WrtCtrl works.
