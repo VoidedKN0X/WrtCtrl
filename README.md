@@ -53,7 +53,7 @@ If the Obtainium button doesn't open the app, add `https://github.com/VoidedKN0X
 
   Advanced users can compare it with [AppVerifier](https://github.com/soupslurpr/AppVerifier).
 - **Checksum:** each release's notes list the APK's SHA-256. Compare it with `sha256sum WrtCtrl-v*.apk`.
-- **Built by this repo:** every release APK has a signed build provenance attestation. With the [GitHub CLI](https://cli.github.com), `gh attestation verify WrtCtrl-v1.0.6.apk -R VoidedKN0X/WrtCtrl` proves it was built by this repo's workflow from the tagged commit.
+- **Built by this repo:** every release APK has a signed build provenance attestation. With the [GitHub CLI](https://cli.github.com), `gh attestation verify WrtCtrl-v1.0.7.apk -R VoidedKN0X/WrtCtrl` proves it was built by this repo's workflow from the tagged commit.
 
 **Permissions**
 

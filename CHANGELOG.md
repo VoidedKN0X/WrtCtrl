@@ -4,6 +4,12 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v1.0.7 (2026-11-05)
+
+### Fixed
+
+- **Password managers can fill your router and Wi-Fi passwords again.** Since 1.0.6 the router sign-in and the Wi-Fi password editor had been hidden from every accessibility service that isn't a screen reader, which also kept password managers that fill through accessibility from filling them. Only the lock and PIN screens are hidden from those apps now. Other apps' floating windows stay hidden over all of these screens, as in 1.0.6.
+
 ## v1.0.6 (2026-11-05)
 
 A security update. Nothing changes in how WrtCtrl works.

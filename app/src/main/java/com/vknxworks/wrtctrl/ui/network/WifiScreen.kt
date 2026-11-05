@@ -186,7 +186,8 @@ private fun WifiEditDialog(iface: WifiIface, currentKey: String, onDismiss: () -
         title = { Text(stringResource(R.string.wifi_edit_title)) },
         text = {
             // Inside the dialog, so its own window is shielded too.
-            ShieldScreen()
+            // Not marked sensitive for accessibility: password managers fill these fields through it.
+            ShieldScreen(sensitive = false)
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Text(stringResource(R.string.wifi_edit_warning), color = CtrlColors.Warn, style = MaterialTheme.typography.bodyMedium)
                 CtrlTextField(

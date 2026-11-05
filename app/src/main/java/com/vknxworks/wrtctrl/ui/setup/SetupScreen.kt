@@ -179,10 +179,10 @@ fun SetupScreen(editId: String? = null, onDone: () -> Unit, onCancel: (() -> Uni
         onDone()
     }
 
-    // The password is typed here: never in screenshots or Recents, no floating windows over it, and
-    // hidden from apps that misuse accessibility.
+    // The password is typed here: never in screenshots or Recents, and no floating windows over it.
     SecureScreen()
-    ShieldScreen()
+    // Not marked sensitive for accessibility: password managers fill these fields through it.
+    ShieldScreen(sensitive = false)
 
     // An http:// address accepted here but not saved is forgotten on leaving; a saved one stays allowed.
     DisposableEffect(Unit) {
