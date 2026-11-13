@@ -4,6 +4,20 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v1.1.0 (2026-11-13)
+
+### New
+
+- **Bandwidth graph per device:** each device's page now shows its data use. With nlbwmon on the router, it's a bar per accounting period (download and upload, the last 12 periods): per month by default, per day if you set nlbwmon's database interval to one day. Without nlbwmon, WrtCtrl shows a live rate measured every 3 seconds from the router's connection tracking table. When neither is available, the page says what to install or which permission to add.
+- **Block on a schedule:** blocking a device from the internet now lets you choose **Reject** (the device is told at once) or **Drop** (its traffic is silently thrown away), and optionally only certain times on certain days, like 22:00 to 07:00 on school nights. The times use the router's clock. A block that's there can be changed later (**Change the block**).
+- **Blocked devices:** Clients shows how many devices are blocked; tap it for the list, with each block's type and times, whether it's blocking right now, and **Allow the internet again**.
+- **Undo:** after blocking or unblocking a device, **Undo** puts it back the way it was.
+- **This phone is protected:** WrtCtrl recognises the phone it's running on (by its address on your network) and asks a second time before blocking it.
+
+### Changed
+
+- **Only WrtCtrl's own firewall rules are ever changed or removed:** the block, change and unblock actions refuse any rule whose name doesn't start with "WrtCtrl block", before anything is sent to the router.
+- **New permissions for the bandwidth graphs:** the permission file in the README adds nlbwmon's history (`nlbw -c list` and `nlbw -c json -g mac -t …`) and LuCI's connection list (`luci getConntrackList`). Copy it to the router again and run `/etc/init.d/rpcd restart` to use them; without them the page explains what's missing.
 ## v1.0.10 (2026-11-13)
 
 A security and privacy check-up. Nothing works differently, and you don't need to sign in again.

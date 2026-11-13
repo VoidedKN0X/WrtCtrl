@@ -114,7 +114,7 @@ suspend fun loadClients(context: Context, client: UbusClient, routerId: String, 
             val hint = hints.firstOrNull { it.mac == mac }
             val myNeigh = neigh.filter { it.mac == mac }
             val host = hosts.firstOrNull { h -> h.list("mac").any { normMac(it) == mac } }
-            val rule = rules.firstOrNull { r -> r.opt("name").startsWith(BLOCK_RULE_PREFIX) && r.list("src_mac").any { normMac(it) == mac } }
+            val rule = rules.firstOrNull { r -> BlockRules.isOurs(r) && r.list("src_mac").any { normMac(it) == mac } }
             val station = stationByMac[mac]
             val v4 = (myLeases.map { it.ip }.filter { '.' in it } + hint?.ipv4.orEmpty() + myNeigh.map { it.ip }.filter { '.' in it } +
                 listOfNotNull(host?.opt("ip")?.ifBlank { null })).distinct()
@@ -157,24 +157,18 @@ suspend fun UbusClient.stageRemoveStaticLease(section: UciSection) = uciDelete("
 
 /**
  * Blocks [mac] from reaching the internet: a firewall rule from the LAN zone to the WAN zone that
- * rejects everything from that MAC. The device stays on the local network.
+ * refuses everything from that MAC ([target]), all the time or on a [schedule]. The device stays on the
+ * local network. See [BlockRules].
  */
-suspend fun UbusClient.stageBlock(mac: String, label: String) {
-    uciAdd(
-        "firewall",
-        "rule",
-        mapOf(
-            "name" to BLOCK_RULE_PREFIX + label.ifBlank { mac },
-            "src" to "lan",
-            "dest" to "wan",
-            "src_mac" to mac,
-            "proto" to "all",
-            "target" to "REJECT",
-        ),
-    )
-}
+suspend fun UbusClient.stageBlock(mac: String, label: String, target: BlockTarget = BlockTarget.REJECT, schedule: BlockSchedule? = null) =
+    stage(BlockRules.blockOps(mac, label, target, schedule))
 
-suspend fun UbusClient.stageUnblock(rule: UciSection) = uciDelete("firewall", rule.name)
+/** Changes an existing block's target and schedule; only ever WrtCtrl's own rules. */
+suspend fun UbusClient.stageUpdateBlock(rule: UciSection, target: BlockTarget, schedule: BlockSchedule?) =
+    stage(BlockRules.updateOps(rule, target, schedule))
+
+/** Removes a block; refuses any firewall rule whose name doesn't start with [BLOCK_RULE_PREFIX]. */
+suspend fun UbusClient.stageUnblock(rule: UciSection) = stage(BlockRules.unblockOps(rule))
 
 // ---------- Nicknames and notes (on the phone only) ----------
 

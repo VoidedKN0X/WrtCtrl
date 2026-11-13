@@ -22,8 +22,8 @@ android {
         minSdk = 35
         targetSdk = 36
         // Bump both to publish a new release (see CHANGELOG.md).
-        versionCode = 13
-        versionName = "1.0.10"
+        versionCode = 14
+        versionName = "1.1.0"
         // 64-bit ARM phones only (arm64-v8a), like every Ctrl app.
         ndk { abiFilters += listOf("arm64-v8a") }
     }
@@ -127,4 +127,7 @@ dependencies {
     implementation(libs.androidx.biometric)
     // MainActivity is a FragmentActivity, which BiometricPrompt needs.
     implementation(libs.androidx.fragment)
+
+    // Unit tests only (not in the app): JUnit 4.
+    testImplementation(libs.junit)
 }

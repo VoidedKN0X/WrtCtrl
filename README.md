@@ -11,7 +11,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 ## Features
 
 - **Overview**: model, OpenWrt version, kernel, uptime, load, CPU, memory, temperature and storage; WAN status, public IP (read from the router itself), gateway, DNS and IPv6; a live WAN throughput graph; Wi-Fi radios; and an attention list for WAN down, a radio off, low memory, storage almost full, package updates and unapplied changes
-- **Clients**: every device on your network, from DHCP leases, host hints, the neighbour table and Wi-Fi, with vendor (from a list built into the app, no online lookup), connection type, signal and lease expiry; sort and filter by name, IP, online, band and signal. Each device's page has its signal and rate history, data use (with nlbwmon), and actions: make its lease static, disconnect it from Wi-Fi, block it from the internet, wake it (Wake-on-LAN with etherwake), your own nickname and notes, and **Open in AdCtrl** when AdCtrl is installed
+- **Clients**: every device on your network, from DHCP leases, host hints, the neighbour table and Wi-Fi, with vendor (from a list built into the app, no online lookup), connection type, signal and lease expiry; sort and filter by name, IP, online, band and signal. Each device's page has its signal and rate history, a **bandwidth graph** (data use per day or month with nlbwmon, or a live rate from the connection table without it), and actions: make its lease static, disconnect it from Wi-Fi, **block it from the internet** (Reject or Drop, all the time or on a schedule with start and stop times and weekdays, with undo, and a second confirmation before blocking the phone you're using), wake it (Wake-on-LAN with etherwake), your own nickname and notes, and **Open in AdCtrl** when AdCtrl is installed. **Blocked devices** lists every device WrtCtrl blocks, with Unblock; WrtCtrl only ever touches its own firewall rules (named `WrtCtrl block …`), never the router's other rules
 - **Network**: Wi-Fi networks and a **guest network** switch, DHCP leases and static leases, **port forwards**, and interfaces with their traffic counters
 - **System**: services, package updates (with `apk` or `opkg`, whichever your router has), the system log, reboot and config backups
 - **Changes that could cut you off are undone automatically**: Wi-Fi, DHCP and firewall changes (including port forwards and blocking a device) are applied with OpenWrt's rollback. If WrtCtrl can't reach the router afterwards, the router puts the old settings back by itself. Restarting an interface, rebooting and package upgrades can't be rolled back, so WrtCtrl asks first (for the LAN, the WAN and a reboot you type the name to confirm)
@@ -107,7 +107,8 @@ Copy this to the router as `/usr/share/rpcd/acl.d/wrtctrl.json`. It holds two pr
         "luci": [
           "getVersion",
           "getMountPoints",
-          "getInitList"
+          "getInitList",
+          "getConntrackList"
         ],
         "iwinfo": [
           "devices",
@@ -172,6 +173,12 @@ Copy this to the router as `/usr/share/rpcd/acl.d/wrtctrl.json`. It holds two pr
           "exec"
         ],
         "/usr/sbin/nlbw -c json -g mac": [
+          "exec"
+        ],
+        "/usr/sbin/nlbw -c list": [
+          "exec"
+        ],
+        "/usr/sbin/nlbw -c json -g mac -t *": [
           "exec"
         ]
       }
@@ -240,7 +247,7 @@ Copy this to the router as `/usr/share/rpcd/acl.d/wrtctrl.json`. It holds two pr
 
 `package-manager-call` is LuCI's wrapper around `apk` (or `opkg` on older OpenWrt), so the same permissions work with either. The `ip neigh` commands give the neighbour table (who's online), `/proc/stat` the CPU use, and the `list` entries let WrtCtrl see which optional packages are installed. Without Wi-Fi on the router, the Wi-Fi entries simply do nothing.
 
-**Updating from an earlier WrtCtrl version?** Copy this file again: 1.0 needs more permissions than 0.2 (Wi-Fi, the neighbour table, packages, blocking and backups), then run `/etc/init.d/rpcd restart`.
+**Updating from an earlier WrtCtrl version?** Copy this file again: 1.0 needs more permissions than 0.2 (Wi-Fi, the neighbour table, packages, blocking and backups), and 1.1 adds nlbwmon's history (`nlbw -c list` and `-t`) and LuCI's connection list (`getConntrackList`) for the bandwidth graphs. Then run `/etc/init.d/rpcd restart`.
 
 ### 2. Add the login
 
@@ -274,7 +281,7 @@ WrtCtrl checks which of these are installed and only shows what they make possib
 
 | Package | What it adds |
 | --- | --- |
-| `nlbwmon` | Data use per device on each client's page |
+| `nlbwmon` | Data use per device on each client's page, as a bar per accounting period: monthly by default, daily with `option database_interval '2026-01-01/1'` in `/etc/config/nlbwmon`. Without it, the page shows a live rate from the connection tracking table (with `getConntrackList` in the permission file) |
 | `etherwake` | **Wake-on-LAN** for wired devices |
 | `luci-app-statistics` (`collectd`) | Detected and installable from WrtCtrl; history graphs from it are planned (WrtCtrl shows live graphs without it) |
 

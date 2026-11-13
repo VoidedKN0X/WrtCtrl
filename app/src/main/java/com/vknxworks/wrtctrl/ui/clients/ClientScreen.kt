@@ -20,6 +20,22 @@ import androidx.compose.material.icons.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.PowerSettingsNew
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Alignment
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import com.vknxworks.wrtctrl.data.router.Bandwidth
+import com.vknxworks.wrtctrl.data.router.BandwidthSource
+import com.vknxworks.wrtctrl.data.router.BlockRule
+import com.vknxworks.wrtctrl.data.router.BlockRules
+import com.vknxworks.wrtctrl.data.router.BlockSchedule
+import com.vknxworks.wrtctrl.data.router.BlockTarget
+import com.vknxworks.wrtctrl.data.router.PhoneAddresses
+import com.vknxworks.wrtctrl.data.router.ThisPhone
+import com.vknxworks.wrtctrl.data.router.stageUpdateBlock
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -110,7 +126,13 @@ fun ClientScreen(mac: String) {
 
     var staticDialog by remember { mutableStateOf(false) }
     var notesDialog by remember { mutableStateOf(false) }
-    var confirmBlock by remember { mutableStateOf(false) }
+    var blockDialog by remember { mutableStateOf(false) }
+    var confirmUnblock by remember { mutableStateOf(false) }
+    // A block of this very phone waits here for the second confirmation.
+    var confirmSelf by remember { mutableStateOf<Pair<BlockTarget, BlockSchedule?>?>(null) }
+    val snackbar = remember { SnackbarHostState() }
+    val phoneIps = remember(data.updatedAt) { PhoneAddresses.current(context) }
+    val isThisPhone = cl != null && ThisPhone.matches(cl.ipv4 + cl.ipv6, phoneIps)
     var confirmDeauth by remember { mutableStateOf(false) }
     var confirmUnstatic by remember { mutableStateOf(false) }
 
@@ -126,7 +148,7 @@ fun ClientScreen(mac: String) {
                 }
                 return@Column
             }
-            ClientInfo(cl)
+            ClientInfo(cl, isThisPhone)
 
             if (history.size >= 2) {
                 CtrlCard(Modifier.padding(horizontal = Gutter, vertical = 6.dp)) {
@@ -136,7 +158,8 @@ fun ClientScreen(mac: String) {
                     }
                 }
             }
-            cl.usage?.let { u ->
+            ClientBandwidth(cl, acl, hasNlbw)
+            cl.usage?.takeIf { Bandwidth.source(acl, hasNlbw) != BandwidthSource.NLBWMON }?.let { u ->
                 Group(stringResource(R.string.client_usage), footer = stringResource(R.string.client_usage_footer)) {
                     GroupRow(stringResource(R.string.rate_down), formatBytes(u.rxBytes))
                     GroupRow(stringResource(R.string.rate_up), formatBytes(u.txBytes))
@@ -158,14 +181,34 @@ fun ClientScreen(mac: String) {
                     val canDeauth = !readOnly && acl.canCall("hostapd.${wifi.ifname}", "del_client")
                     GroupRow(stringResource(R.string.client_deauth), stringResource(R.string.client_deauth_sub), icon = Icons.Outlined.LinkOff, onClick = if (canDeauth) ({ confirmDeauth = true }) else null, titleColor = if (canDeauth) CtrlColors.Text else CtrlColors.Muted)
                 }
-                GroupRow(
-                    stringResource(if (cl.blocked) R.string.client_unblock else R.string.client_block),
-                    stringResource(if (cl.blocked) R.string.client_unblock_sub else R.string.client_block_sub),
-                    icon = Icons.Outlined.Block,
-                    iconTint = if (cl.blocked) CtrlColors.Muted else CtrlColors.Error,
-                    titleColor = if (!canFw) CtrlColors.Muted else if (cl.blocked) CtrlColors.Text else CtrlColors.Error,
-                    onClick = if (canFw) ({ confirmBlock = true }) else null,
-                )
+                val rule = cl.blockRule?.let(BlockRules::parse)
+                if (rule != null) {
+                    GroupRow(
+                        stringResource(R.string.block_change),
+                        blockSummary(rule),
+                        icon = Icons.Outlined.Schedule,
+                        showChevron = canFw,
+                        titleColor = if (canFw) CtrlColors.Text else CtrlColors.Muted,
+                        onClick = if (canFw) ({ blockDialog = true }) else null,
+                    )
+                    GroupRow(
+                        stringResource(R.string.client_unblock),
+                        stringResource(R.string.client_unblock_sub),
+                        icon = Icons.Outlined.Block,
+                        iconTint = CtrlColors.Muted,
+                        titleColor = if (canFw) CtrlColors.Text else CtrlColors.Muted,
+                        onClick = if (canFw) ({ confirmUnblock = true }) else null,
+                    )
+                } else {
+                    GroupRow(
+                        stringResource(R.string.client_block),
+                        stringResource(if (isThisPhone) R.string.client_block_sub_self else R.string.client_block_sub),
+                        icon = Icons.Outlined.Block,
+                        iconTint = CtrlColors.Error,
+                        titleColor = if (canFw) CtrlColors.Error else CtrlColors.Muted,
+                        onClick = if (canFw) ({ blockDialog = true }) else null,
+                    )
+                }
                 if (optional.value?.contains(OptionalPackage.ETHERWAKE) == true) {
                     val canWake = !readOnly && acl.canExec("/usr/bin/etherwake -D -i br-lan ${cl.mac}")
                     GroupRow(stringResource(R.string.client_wake), stringResource(R.string.client_wake_sub), icon = Icons.Outlined.PowerSettingsNew, titleColor = if (canWake) CtrlColors.Text else CtrlColors.Muted, onClick = if (canWake) ({
@@ -192,6 +235,9 @@ fun ClientScreen(mac: String) {
                 Text(stringResource(R.string.read_only_actions_hidden), style = MaterialTheme.typography.bodySmall, color = CtrlColors.Muted, modifier = Modifier.padding(horizontal = Gutter + 4.dp))
             }
         }
+    }
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+        SnackbarHost(snackbar, Modifier.navigationBarsPadding())
     }
 
     val client = active?.client
@@ -226,23 +272,65 @@ fun ClientScreen(mac: String) {
                 },
             )
         }
-        if (confirmBlock) {
-            ConfirmDialog(
-                title = stringResource(if (cl.blocked) R.string.client_unblock else R.string.client_block),
-                body = stringResource(if (cl.blocked) R.string.client_unblock_body else R.string.client_block_body, label),
-                confirmLabel = stringResource(if (cl.blocked) R.string.client_unblock else R.string.client_block),
-                danger = !cl.blocked,
-                onDismiss = { confirmBlock = false },
-                onConfirm = {
-                    confirmBlock = false
-                    scope.launch {
-                        val rule = cl.blockRule
-                        if (rule != null) {
-                            c.changes.apply(client, context.getString(R.string.change_unblock, label)) { stageUnblock(rule) }
-                        } else {
-                            c.changes.apply(client, context.getString(R.string.change_block, label)) { stageBlock(cl.mac, label) }
-                        }
+        val section = cl.blockRule
+        val rule = section?.let(BlockRules::parse)
+        /** Blocks (or changes the block), then offers to undo it. */
+        fun block(target: BlockTarget, schedule: BlockSchedule?) {
+            scope.launch {
+                val ok = if (section != null) {
+                    c.changes.apply(client, context.getString(R.string.change_block_edit, label)) { stageUpdateBlock(section, target, schedule) }
+                } else {
+                    c.changes.apply(client, context.getString(R.string.change_block, label)) { stageBlock(cl.mac, label, target, schedule) }
+                }
+                data.refresh()
+                if (ok && section == null) {
+                    val r = snackbar.showSnackbar(context.getString(R.string.block_done, label), context.getString(R.string.undo), duration = SnackbarDuration.Long)
+                    val added = data.value?.blockRule
+                    if (r == SnackbarResult.ActionPerformed && added != null && BlockRules.isOurs(added)) {
+                        c.changes.apply(client, context.getString(R.string.change_unblock, label)) { stageUnblock(added) }
                         data.refresh()
+                    }
+                }
+            }
+        }
+        if (blockDialog) {
+            BlockDialog(label, rule, onDismiss = { blockDialog = false }) { target, schedule ->
+                blockDialog = false
+                // Blocking the phone WrtCtrl runs on can cut it off from the internet: ask a second time.
+                if (isThisPhone && section == null) confirmSelf = target to schedule else block(target, schedule)
+            }
+        }
+        confirmSelf?.let { (target, schedule) ->
+            ConfirmDialog(
+                title = stringResource(R.string.block_self_title),
+                body = stringResource(R.string.block_self_body, label),
+                confirmLabel = stringResource(R.string.block_self_confirm),
+                onDismiss = { confirmSelf = null },
+                onConfirm = {
+                    confirmSelf = null
+                    block(target, schedule)
+                },
+            )
+        }
+        if (confirmUnblock && section != null) {
+            ConfirmDialog(
+                title = stringResource(R.string.client_unblock),
+                body = stringResource(R.string.client_unblock_body, label),
+                confirmLabel = stringResource(R.string.client_unblock),
+                danger = false,
+                onDismiss = { confirmUnblock = false },
+                onConfirm = {
+                    confirmUnblock = false
+                    scope.launch {
+                        val ok = c.changes.apply(client, context.getString(R.string.change_unblock, label)) { stageUnblock(section) }
+                        data.refresh()
+                        if (ok && rule != null) {
+                            val r = snackbar.showSnackbar(context.getString(R.string.unblock_done, label), context.getString(R.string.undo), duration = SnackbarDuration.Long)
+                            if (r == SnackbarResult.ActionPerformed) {
+                                c.changes.apply(client, context.getString(R.string.change_block, label)) { stageBlock(cl.mac, rule.label.ifBlank { label }, rule.target, rule.schedule) }
+                                data.refresh()
+                            }
+                        }
                     }
                 },
             )
@@ -280,7 +368,7 @@ private fun isInstalled(context: Context, pkg: String): Boolean =
     runCatching { context.packageManager.getLaunchIntentForPackage(pkg) != null }.getOrDefault(false)
 
 @Composable
-private fun ClientInfo(cl: NetClient) {
+private fun ClientInfo(cl: NetClient, thisPhone: Boolean) {
     CtrlCard(Modifier.padding(horizontal = Gutter, vertical = 6.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             CtrlSectionLabel(
@@ -306,6 +394,7 @@ private fun ClientInfo(cl: NetClient) {
                     else -> stringResource(R.string.client_lease_expires, formatUptime(cl.leaseExpires))
                 },
                 if (cl.blocked) stringResource(R.string.client_is_blocked) else null,
+                if (thisPhone) stringResource(R.string.client_this_phone) else null,
             )
             Text(lines.joinToString("\n"), style = CtrlType.Mono, color = CtrlColors.Muted)
             if (cl.note.isNotBlank()) Text(cl.note, style = MaterialTheme.typography.bodyMedium)
@@ -380,4 +469,14 @@ private fun NotesDialog(cl: NetClient, onDismiss: () -> Unit, onSave: (ClientNot
         confirmButton = { TextButton(onClick = { onSave(ClientNote(nickname.trim(), note.trim())) }) { Text(stringResource(R.string.save_changes)) } },
         dismissButton = { TextButton(onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
+}
+
+/** "Reject · 22:00–07:00 · Mon Tue" for a block rule. */
+@Composable
+fun blockSummary(rule: BlockRule): String {
+    val target = stringResource(if (rule.target == BlockTarget.REJECT) R.string.block_reject else R.string.block_drop)
+    val s = rule.schedule ?: return target + "  ·  " + stringResource(R.string.block_always)
+    val days = if (s.days.isEmpty()) stringResource(R.string.block_every_day) else java.time.DayOfWeek.entries.filter { it in s.days }
+        .joinToString(" ") { it.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.getDefault()) }
+    return listOf(target, BlockRules.formatTime(s.start) + "–" + BlockRules.formatTime(s.stop), days).joinToString("  ·  ")
 }

@@ -18,6 +18,7 @@ import kotlinx.serialization.Serializable
 
 // Pushed screens
 @Serializable data class ClientRoute(val mac: String)
+@Serializable data object BlockedRoute
 @Serializable data object WifiRoute
 @Serializable data object DhcpRoute
 @Serializable data object PortForwardsRoute

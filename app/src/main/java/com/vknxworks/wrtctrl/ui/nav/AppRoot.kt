@@ -234,6 +234,7 @@ private fun AppNavHost(navController: NavHostController) {
         composable<RoutersRoute> { RoutersScreen() }
         composable<NotificationsRoute> { NotificationsScreen() }
         composable<ClientRoute> { ClientScreen(it.toRoute<ClientRoute>().mac) }
+        composable<BlockedRoute> { com.vknxworks.wrtctrl.ui.clients.BlockedScreen() }
         composable<WifiRoute> { WifiScreen() }
         composable<DhcpRoute> { DhcpScreen() }
         composable<PortForwardsRoute> { PortForwardsScreen() }

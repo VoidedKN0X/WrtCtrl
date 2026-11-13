@@ -568,4 +568,65 @@
         <item quantity="one">%2$s: %1$d package update</item>
         <item quantity="other">%2$s: %1$d package updates</item>
     </plurals>
+
+    <!-- Blocking with a schedule, blocked devices, undo -->
+    <string name="undo">Undo</string>
+    <string name="client_block_sub_self">This is the phone you\'re using: WrtCtrl asks twice</string>
+    <string name="client_this_phone">This is the phone you\'re using</string>
+    <string name="block_change">Change the block</string>
+    <string name="block_title">Block %1$s?</string>
+    <string name="block_change_title">Change the block of %1$s</string>
+    <string name="block_reject">Reject</string>
+    <string name="block_reject_sub">The device is told at once that it can\'t connect</string>
+    <string name="block_drop">Drop</string>
+    <string name="block_drop_sub">Its traffic is silently thrown away; apps wait until they give up</string>
+    <string name="block_schedule">Only at certain times</string>
+    <string name="block_schedule_sub">For example bedtime on school nights. Off: blocked all the time</string>
+    <string name="block_from">From (HH:MM)</string>
+    <string name="block_until">Until (HH:MM)</string>
+    <string name="block_time_invalid">Enter the times as HH:MM, like 22:00.</string>
+    <string name="block_time_same">From and Until can\'t be the same time.</string>
+    <string name="block_schedule_every_day">Every day, in the router\'s time zone. Until earlier than From runs past midnight.</string>
+    <string name="block_schedule_days_note">Only on the ticked days, in the router\'s time zone. The router matches the clock: with an overnight time, a ticked day covers its own evening and its own early morning.</string>
+    <string name="block_always">All the time</string>
+    <string name="block_every_day">every day</string>
+    <string name="block_done">%1$s is blocked from the internet</string>
+    <string name="unblock_done">%1$s can reach the internet again</string>
+    <string name="change_block_edit">Change the block of %1$s</string>
+    <string name="block_self_title">Block this phone?</string>
+    <string name="block_self_body">%1$s is the phone you\'re using now. Blocking it cuts this phone off from the internet through this router (WrtCtrl can still reach the router on your network to undo it, but other apps and calls over Wi-Fi stop working). Are you sure?</string>
+    <string name="block_self_confirm">Block this phone</string>
+    <plurals name="blocked_devices_row">
+        <item quantity="one">%1$d device blocked from the internet</item>
+        <item quantity="other">%1$d devices blocked from the internet</item>
+    </plurals>
+    <string name="blocked_title">Blocked devices</string>
+    <string name="blocked_none">No device is blocked</string>
+    <string name="blocked_none_body">Block a device from its page in Clients. Only the firewall rules WrtCtrl added (named \"WrtCtrl block …\") show here.</string>
+    <string name="blocked_footer">Only the firewall rules WrtCtrl added are shown and changed here; the router\'s other rules are never touched. Changes are applied with rollback.</string>
+    <string name="blocked_disabled">Rule turned off on the router</string>
+    <string name="blocked_now">Blocked right now</string>
+    <string name="blocked_not_now">Not blocked right now (outside its times)</string>
+    <string name="blocked_clock_note">\"Right now\" uses this phone\'s clock; the router uses its own.</string>
+
+    <!-- Per-device bandwidth -->
+    <string name="bw_title">Bandwidth</string>
+    <string name="bw_title_daily">Data use per day</string>
+    <string name="bw_title_weekly">Data use per week</string>
+    <string name="bw_title_monthly">Data use per month</string>
+    <string name="bw_title_periods">Data use per period</string>
+    <string name="bw_none_yet">nlbwmon hasn\'t counted any traffic for this device yet.</string>
+    <string name="bw_current_period">Since %1$s: %2$s down, %3$s up</string>
+    <string name="bw_nlbw_footer">From nlbwmon, one bar per accounting period (the last 12). The period is nlbwmon\'s database interval: monthly by default; set it to one day in /etc/config/nlbwmon (option database_interval \'2026-01-01/1\') for daily bars.</string>
+    <string name="bw_chart_desc">Bar chart of %1$d periods, highest %2$s</string>
+    <string name="bw_legend_down">■ Download</string>
+    <string name="bw_legend_up">■ Upload</string>
+    <string name="bw_live">Live rate</string>
+    <string name="bw_live_waiting">Measuring…</string>
+    <string name="bw_no_acct">The router doesn\'t count bytes per connection, so the rate stays at 0. Turn on connection accounting (sysctl net.netfilter.nf_conntrack_acct=1).</string>
+    <string name="bw_live_footer">Measured every 3 seconds from the router\'s connection tracking table, download and upload together. An estimate: traffic that\'s offloaded in hardware isn\'t counted. Install nlbwmon for totals per day or month.</string>
+    <string name="bw_live_footer_nlbw_acl">Measured every 3 seconds from the router\'s connection tracking table. nlbwmon is installed, but WrtCtrl\'s login may not read its history: copy the permission file from the README again for totals per day or month.</string>
+    <string name="bw_needs_title">Per-device bandwidth needs one of these on the router</string>
+    <string name="bw_needs_body">• nlbwmon (System › Packages, or apk add nlbwmon) for totals per day or month, or\n• permission for LuCI\'s connection list (\"luci\": [\"getConntrackList\"] in WrtCtrl\'s permission file) for a live rate.\nThe README\'s permission file has both. After changing it, run /etc/init.d/rpcd restart and sign in again.</string>
+    <string name="bw_needs_acl">nlbwmon is installed, but WrtCtrl\'s login may not read its history or the connection list. Copy the permission file from the README to /usr/share/rpcd/acl.d/wrtctrl.json again, run /etc/init.d/rpcd restart and sign in again.</string>
 </resources>

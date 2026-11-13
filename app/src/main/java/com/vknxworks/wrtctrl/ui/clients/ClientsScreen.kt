@@ -39,6 +39,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.vknxworks.wrtctrl.R
@@ -169,6 +171,20 @@ fun ClientsScreen() {
                             color = CtrlColors.Muted,
                             modifier = Modifier.padding(horizontal = Gutter, vertical = 8.dp),
                         )
+                    }
+                    val blocked = all.count { it.blockRule != null }
+                    if (blocked > 0) {
+                        item("blocked") {
+                            Row(
+                                Modifier.fillMaxWidth().clickable { nav.navigate(com.vknxworks.wrtctrl.ui.nav.BlockedRoute) }.padding(horizontal = Gutter, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                            ) {
+                                Icon(Icons.Outlined.Block, null, tint = CtrlColors.Error, modifier = Modifier.size(24.dp))
+                                Text(pluralStringResource(R.plurals.blocked_devices_row, blocked, blocked), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                                Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null, tint = CtrlColors.Muted)
+                            }
+                        }
                     }
                     items(shown, key = { it.mac }) { cl -> ClientRow(cl) { nav.navigate(ClientRoute(cl.mac)) } }
                 }
