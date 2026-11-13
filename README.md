@@ -336,7 +336,7 @@ Turn it on: tap your profile picture › **Settings › Privacy and security ›
 
 ## Privacy
 
-**Telemetry-free and Google-free.** WrtCtrl has no analytics, crash reporting, usage stats, ads or tracking of any kind, no update checks, and no Google libraries or services. It never reads the name of the Wi-Fi network you're on. Device vendors are looked up in a list built into the app ([oui-data](https://github.com/silverwind/oui-data), from the IEEE registry), and your public IP is read from the router itself, so nothing about your network is sent anywhere else. Nicknames and notes for devices stay on the phone. Router passwords are encrypted with the Android Keystore and never written to a log, and nothing is included in Android backups or moved to a new phone.
+**Telemetry-free and Google-free.** WrtCtrl has no analytics, crash reporting, usage stats, ads or tracking of any kind, no update checks, and no Google libraries or services. It never reads the name of the Wi-Fi network you're on. Device vendors are looked up in a list built into the app ([oui-data](https://github.com/silverwind/oui-data), from the IEEE registry), and your public IP is read from the router itself, so nothing about your network is sent anywhere else. Nicknames and notes for devices stay on the phone. Router passwords are encrypted with the Android Keystore (in the StrongBox security chip when the phone has one) and never written to a log, and nothing is included in Android backups or moved to a new phone.
 
 Everything WrtCtrl connects to:
 

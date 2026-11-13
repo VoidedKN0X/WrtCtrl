@@ -85,10 +85,11 @@
             </intent-filter>
         </service>
 
-        <!-- Home-screen widget (Glance): WAN status, throughput and online clients. -->
+        <!-- Home-screen widget (Glance): WAN status, throughput and online clients. Not exported: only the system's
+             widget service sends it updates (it reaches non-exported receivers), so other apps can't trigger refreshes. -->
         <receiver
             android:name=".ui.widgets.RouterWidgetReceiver"
-            android:exported="true"
+            android:exported="false"
             android:label="@string/widget_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
