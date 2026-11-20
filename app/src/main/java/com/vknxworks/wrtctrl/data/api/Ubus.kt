@@ -178,7 +178,7 @@ class UbusClient(
      * [warm] makes both on a background thread before the first call.
      */
     private val lazyHttp = lazy { httpFor(baseHttp, router.host, router.certPin) }
-    private val http: OkHttpClient get() = lazyHttp.value
+    val http: OkHttpClient get() = lazyHttp.value
     private val endpoint: HttpUrl = endpointFor(router.url)
     private val loginLock = Mutex()
     private val lazySecrets = lazy(loadSecrets)

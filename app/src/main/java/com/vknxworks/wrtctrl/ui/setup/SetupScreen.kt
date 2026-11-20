@@ -142,7 +142,7 @@ fun SetupScreen(editId: String? = null, onDone: () -> Unit, onCancel: (() -> Uni
                     sessionTimeout = login.timeout,
                 )
                 val board = if (login.acl.canCall("system", "board")) {
-                    runCatching { UbusClient(draft, c.http, secrets).board() }.getOrNull()
+                    runCatching { UbusClient(draft, c.http, { secrets }).board() }.getOrNull()
                 } else {
                     null
                 }
