@@ -372,15 +372,27 @@ suspend fun UbusClient.serviceAction(name: String, action: String) {
 
 // ---------- Logs ----------
 
-data class LogLine(val time: Long, val source: String, val priority: Int, val msg: String)
+/** One line of the system log. [id] is logd's own line number (counting up by one), or -1 when the router sends none. */
+data class LogLine(val time: Long, val source: String, val priority: Int, val msg: String, val id: Long = -1)
 
-/** The last [lines] lines of the system log (logd). [LogLine.time] in ms. */
+/** The last [lines] lines of the system log (logd), oldest first. [LogLine.time] in ms. */
 suspend fun UbusClient.systemLog(lines: Int = 500): List<LogLine> =
     call("log", "read", buildJsonObject { put("lines", lines); put("oneshot", true); put("stream", false) })
         .arr("log").objects().map {
             val t = it.long("time")
-            LogLine(if (t in 1..99_999_999_999L) t * 1000 else t, it.str("source"), it.int("priority", 6), it.str("msg"))
+            LogLine(if (t in 1..99_999_999_999L) t * 1000 else t, it.str("source"), it.int("priority", 6), it.str("msg"), it.long("id", -1))
         }
+
+/**
+ * The last [max] lines of the system log for a screen that already shows [previous]: reads only the
+ * last [tail] lines and joins them on (see [mergeLogTail]). Reads all [max] lines when nothing is
+ * shown yet, when the router's lines carry no id, or when the tail can't be joined without a doubt
+ * (too many new lines, or the log started over).
+ */
+suspend fun UbusClient.systemLogUpdate(previous: List<LogLine>?, max: Int = 1000, tail: Int = 100): List<LogLine> {
+    if (previous.isNullOrEmpty() || previous.last().id < 0) return systemLog(max)
+    return mergeLogTail(previous, systemLog(tail), max) ?: systemLog(max)
+}
 
 // ---------- Packages ----------
 

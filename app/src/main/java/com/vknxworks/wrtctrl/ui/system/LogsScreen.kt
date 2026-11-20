@@ -25,7 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.vknxworks.wrtctrl.R
 import com.vknxworks.wrtctrl.data.api.LogLine
-import com.vknxworks.wrtctrl.data.api.systemLog
+import com.vknxworks.wrtctrl.data.api.systemLogUpdate
 import com.vknxworks.wrtctrl.ui.components.CtrlTextField
 import com.vknxworks.wrtctrl.ui.components.ErrorCard
 import com.vknxworks.wrtctrl.ui.components.ScreenTopBar
@@ -37,6 +37,7 @@ import com.vknxworks.wrtctrl.ui.theme.Gutter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicReference
 
 /** Quick filters: the log's source process (as LuCI shows it). */
 private enum class LogFilter(val label: Int, val match: (LogLine) -> Boolean) {
@@ -53,7 +54,9 @@ fun LogsScreen() {
     val router = activeRouter()?.router
     var query by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableStateOf(LogFilter.ALL) }
-    val data = rememberRouterData(5_000) { client -> client.systemLog(1000) }
+    // What the last refresh showed, so the next one only downloads the newest lines and joins them on.
+    val shown = remember(router?.id) { AtomicReference<List<LogLine>?>(null) }
+    val data = rememberRouterData(5_000) { client -> client.systemLogUpdate(shown.get()).also { shown.set(it) } }
     val q = query.trim()
     // Filtered once per refresh or per change of the search, not with every redraw of the screen.
     val all = data.value
