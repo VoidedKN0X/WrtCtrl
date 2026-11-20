@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -54,9 +55,13 @@ fun LogsScreen() {
     var filter by rememberSaveable { mutableStateOf(LogFilter.ALL) }
     val data = rememberRouterData(5_000) { client -> client.systemLog(1000) }
     val q = query.trim()
-    val lines = data.value.orEmpty().filter { filter.match(it) && (q.isEmpty() || it.msg.contains(q, ignoreCase = true)) }
+    // Filtered once per refresh or per change of the search, not with every redraw of the screen.
+    val all = data.value
+    val lines = remember(all, filter, q) {
+        all.orEmpty().filter { filter.match(it) && (q.isEmpty() || it.msg.contains(q, ignoreCase = true)) }
+    }
     val listState = rememberLazyListState()
-    val fmt = SimpleDateFormat("MMM d HH:mm:ss", Locale.getDefault())
+    val fmt = remember { SimpleDateFormat("MMM d HH:mm:ss", Locale.getDefault()) }
 
     Column(Modifier.fillMaxSize()) {
         ScreenTopBar(stringResource(R.string.sys_logs))

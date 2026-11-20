@@ -16,10 +16,12 @@ import com.vknxworks.wrtctrl.data.api.temperature
 import com.vknxworks.wrtctrl.data.api.uciChanges
 import com.vknxworks.wrtctrl.data.api.wan
 import com.vknxworks.wrtctrl.data.api.wireless
+import android.os.SystemClock
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.concurrent.ConcurrentHashMap
 
 /** Everything the Overview shows, from one refresh. Parts the login may not read are null or empty. */
 data class OverviewSnapshot(
@@ -49,9 +51,13 @@ object LiveStats {
         var lastDevice = ""
         var cpu: CpuTimes? = null
         val points = ArrayDeque<RatePoint>()
+
+        /** A copy of [points] made under the lock, for readers that don't hold it. */
+        @Volatile
+        var snapshot: List<RatePoint> = emptyList()
     }
 
-    private val states = HashMap<String, State>()
+    private val states = ConcurrentHashMap<String, State>()
     private val lock = Mutex()
 
     /** Reads the WAN device's counters and adds a sample. Returns the samples so far. */
@@ -74,11 +80,11 @@ object LiveStats {
             s.lastTx = stats.txBytes
             s.lastAt = now
             s.lastDevice = device
-            s.points.toList()
+            s.points.toList().also { s.snapshot = it }
         }
     }
 
-    fun points(routerId: String): List<RatePoint> = states[routerId]?.points?.toList().orEmpty()
+    fun points(routerId: String): List<RatePoint> = states[routerId]?.snapshot.orEmpty()
 
     /** CPU use since the previous call for this router (null on the first). */
     suspend fun cpu(routerId: String, client: UbusClient): Double? {
@@ -92,17 +98,68 @@ object LiveStats {
     }
 }
 
-/** Reads everything the Overview needs, in parallel; each part is skipped when the login may not read it. */
-suspend fun loadOverview(routerId: String, client: UbusClient): OverviewSnapshot = coroutineScope {
+/** How long the slowly changing parts of the Overview (storage, radios, unsaved changes) are reused. */
+private const val SLOW_MS = 15_000L
+
+/**
+ * The parts of the Overview that rarely change (storage use, the Wi-Fi radios, the number of unsaved
+ * changes), kept for [SLOW_MS] so the 2-second refresh doesn't ask the router for them every time.
+ * One per open Overview: leaving the screen and coming back, or pulling to refresh, reads them again.
+ * A read that failed is not kept, so it's tried again with the next refresh.
+ */
+class OverviewSlow {
+    private class Entry<T>(val value: T, val at: Long)
+
+    @Volatile private var mounts: Entry<List<Mount>>? = null
+    @Volatile private var radios: Entry<List<WifiRadio>>? = null
+    @Volatile private var changes: Entry<Int>? = null
+
+    /** Everything is read again with the next refresh. */
+    fun clear() {
+        mounts = null
+        radios = null
+        changes = null
+    }
+
+    private fun <T> fresh(e: Entry<T>?): T? =
+        if (e != null && SystemClock.elapsedRealtime() - e.at < SLOW_MS) e.value else null
+
+    suspend fun mounts(client: UbusClient): List<Mount> {
+        fresh(mounts)?.let { return it }
+        val read = runCatching { client.mountPoints() }.getOrNull() ?: return emptyList()
+        mounts = Entry(read, SystemClock.elapsedRealtime())
+        return read
+    }
+
+    suspend fun radios(client: UbusClient): List<WifiRadio> {
+        fresh(radios)?.let { return it }
+        val read = runCatching { client.wireless() }.getOrNull() ?: return emptyList()
+        radios = Entry(read, SystemClock.elapsedRealtime())
+        return read
+    }
+
+    suspend fun changes(client: UbusClient): Int {
+        fresh(changes)?.let { return it }
+        val read = runCatching { client.uciChanges().values.sum() }.getOrNull() ?: return 0
+        changes = Entry(read, SystemClock.elapsedRealtime())
+        return read
+    }
+}
+
+/**
+ * Reads everything the Overview needs, in parallel; each part is skipped when the login may not read it.
+ * The slowly changing parts come from [slow] when they were read less than [SLOW_MS] ago.
+ */
+suspend fun loadOverview(routerId: String, client: UbusClient, slow: OverviewSlow = OverviewSlow()): OverviewSnapshot = coroutineScope {
     val acl = client.acl
     fun can(o: String, m: String) = acl?.canCall(o, m) != false
     val info = async { if (can("system", "info")) client.systemInfo() else null }
-    val mounts = async { if (can("luci", "getMountPoints")) runCatching { client.mountPoints() }.getOrDefault(emptyList()) else emptyList() }
+    val mounts = async { if (can("luci", "getMountPoints")) slow.mounts(client) else emptyList() }
     val cpu = async { runCatching { LiveStats.cpu(routerId, client) }.getOrNull() }
     val temp = async { runCatching { client.temperature() }.getOrNull() }
     val ifaces = async { if (can("network.interface", "dump")) client.interfaces() else emptyList() }
-    val radios = async { if (can("luci-rpc", "getWirelessDevices")) runCatching { client.wireless() }.getOrDefault(emptyList()) else emptyList() }
-    val changes = async { if (can("uci", "changes")) runCatching { client.uciChanges().values.sum() }.getOrDefault(0) else 0 }
+    val radios = async { if (can("luci-rpc", "getWirelessDevices")) slow.radios(client) else emptyList() }
+    val changes = async { if (can("uci", "changes")) slow.changes(client) else 0 }
     OverviewSnapshot(
         info = info.await(),
         storage = mounts.await().let { m -> m.firstOrNull { it.mount == "/overlay" } ?: m.firstOrNull { it.mount == "/" } },

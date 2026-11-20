@@ -4,6 +4,29 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+Not released yet: these changes are on `main` and will be part of the next version.
+
+### Removed
+
+- **The home screen widget is gone.** The **Router** widget (WAN status, throughput, online devices) has been removed from WrtCtrl, together with its 30-minute background refresh. If you had it on your home screen, Android shows an empty or "can't load" box in its place after updating: remove that box by hand. WrtCtrl stops the widget's leftover refresh job and deletes the small file with the widget's last numbers the next time you open the app.
+- **The Guest Wi-Fi Quick Settings tile is gone.** Guest Wi-Fi is switched from the Network tab, or opened quickly with the **Guest Wi-Fi** app shortcut (long-press the icon). App shortcuts (Clients, Guest Wi-Fi, Reboot) are unchanged.
+- **Jetpack Glance is no longer in the app.** It was only used to draw the widget, so the library is removed and the app gets a little smaller.
+- "Background checks while locked" now only covers notifications; its description no longer mentions the widget and the tile. When you turn the app lock on, the option is suggested only when notifications are in use (a placed widget used to count too).
+
+### Changed
+
+- **Faster start.** Decrypting the saved router login (up to four Android Keystore operations, slow on phones with a security chip) and setting up the connection for a pinned certificate used to happen on the main thread while the app was starting, for every start of the app and of its background checks. Both now happen on a background thread, right before the first request to the router.
+- **One sign-in at start instead of two.** WrtCtrl made the connection to the active router twice while starting, and each one signed in to the router again, leaving an extra session on the router to time out. It now makes it once. Locking and unlocking the app still makes a fresh connection, as before.
+- **The Overview asks the router for less.** It refreshes every 2 seconds for the live graph, CPU, memory and interfaces, and used to ask for storage use, the Wi-Fi radios and the number of unsaved changes at the same pace. Those three are now read every 15 seconds (three requests fewer on most refreshes), and straight away when you pull to refresh, tap Retry, come back to the Overview, or apply or undo a change.
+- **Permission checks are cheaper.** With a restricted login, every request first checks the login's permission patterns; each pattern was compiled again for every check. They are now compiled once.
+- **The system log scrolls more smoothly.** The log lines were filtered again and a new date formatter was made with every redraw of the screen; now only when the log refreshes or the search or filter changes.
+
+### Fixed
+
+- The live throughput graph's saved samples could be read while they were being updated (when opening the Overview during a refresh). They're now read from a finished copy.
+
 ## v1.1.1 (2026-11-20)
 
 ### Changed

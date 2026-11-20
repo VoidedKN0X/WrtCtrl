@@ -52,15 +52,36 @@ class Sessions(
     /** Bumped when secrets change outside the client (a new password), so the client is rebuilt. */
     private val revision = MutableStateFlow(0)
 
+    /**
+     * The client last made, with the router settings and revision it was made for. The value [active]
+     * starts with is reused when the flow below reaches the same router, so the app starts with one
+     * client and one sign-in instead of two. Dropped while locked, so unlocking always makes a new client.
+     */
+    @Volatile
+    private var built: Triple<Router, Int, ActiveRouter>? = null
+
+    private fun activeFor(router: Router, rev: Int): ActiveRouter {
+        val last = built
+        if (last != null && last.first == router && last.second == rev) return last.third
+        return ActiveRouter(router, clientFor(router)).also { built = Triple(router, rev, it) }
+    }
+
     val active: StateFlow<ActiveRouter?> = combine(store.routers, store.activeId, revision, locked) { list, id, rev, isLocked ->
         (if (isLocked) null else list.firstOrNull { it.id == id }) to rev
     }
         .distinctUntilChanged()
-        .map { (router, _) -> router?.let { ActiveRouter(it, clientFor(it)) } }
+        .map { (router, rev) ->
+            if (router == null) {
+                built = null
+                null
+            } else {
+                activeFor(router, rev)
+            }
+        }
         .stateIn(
             scope,
             SharingStarted.Eagerly,
-            if (initiallyLocked) null else store.routers.value.firstOrNull { it.id == store.activeId.value }?.let { ActiveRouter(it, clientFor(it)) },
+            if (initiallyLocked) null else store.routers.value.firstOrNull { it.id == store.activeId.value }?.let { activeFor(it, revision.value) },
         )
 
     private val _access = MutableStateFlow(Access())
@@ -77,7 +98,7 @@ class Sessions(
         UbusClient(
             router,
             baseHttp,
-            store.secrets(router.id),
+            loadSecrets = { store.secrets(router.id) },
             isReadOnly = { store.routers.value.firstOrNull { it.id == router.id }?.readOnly ?: router.readOnly },
             onSecretsChanged = { updated -> store.saveSecrets(router.id, updated) },
         )

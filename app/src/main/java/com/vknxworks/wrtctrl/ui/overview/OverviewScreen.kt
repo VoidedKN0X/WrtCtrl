@@ -28,6 +28,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -90,9 +91,13 @@ fun OverviewScreen() {
     val routerId = router?.id.orEmpty()
     var rates by remember(routerId) { mutableStateOf(LiveStats.points(routerId)) }
     var refreshing by remember { mutableStateOf(false) }
+    // Storage, radios and unsaved changes are read every 15 seconds instead of with every 2-second refresh.
+    val slow = remember(routerId) { OverviewSlow() }
+    // Applying, confirming or rolling back a change: read them again with the next refresh.
+    LaunchedEffect(slow) { c.changes.state.collect { slow.clear() } }
 
     val data = rememberRouterData(POLL_MS) { client ->
-        val snap = loadOverview(routerId, client)
+        val snap = loadOverview(routerId, client, slow)
         val wan = snap.interfaces.wan()
         if (wan != null && client.acl?.canCall("network.device", "status") != false) {
             rates = runCatching { LiveStats.sampleWan(routerId, client, wan.statsDevice) }.getOrDefault(rates)
@@ -108,6 +113,7 @@ fun OverviewScreen() {
             onRefresh = {
                 refreshing = true
                 scope.launch {
+                    slow.clear()
                     data.refresh()
                     clients.refresh()
                     refreshing = false
@@ -126,7 +132,7 @@ fun OverviewScreen() {
                     )
                 }
                 val err = access.error ?: data.error
-                if (err != null) item("error") { ErrorCard(err, router?.host.orEmpty(), onRetry = { c.sessions.refreshAccess(); data.refresh() }) }
+                if (err != null) item("error") { ErrorCard(err, router?.host.orEmpty(), onRetry = { c.sessions.refreshAccess(); slow.clear(); data.refresh() }) }
                 if (snap != null) {
                     val wan = snap.interfaces.wan()
                     item("throughput") { ThroughputCard(rates, wan) }

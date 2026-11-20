@@ -43,7 +43,7 @@ class FakeUbus(private val answer: (String, String, JsonObject) -> String?) : Au
     fun client(readOnly: Boolean = false): UbusClient = UbusClient(
         Router(id = "r1", name = "Test router", url = server.url, username = "wrtctrl", readOnly = readOnly),
         OkHttpClient(),
-        RouterSecrets(password = "unused", session = "0123456789abcdef0123456789abcdef"),
+        { RouterSecrets(password = "unused", session = "0123456789abcdef0123456789abcdef") },
     )
 
     fun callsTo(obj: String, method: String): List<Call> = calls.filter { it.obj == obj && it.method == method }

@@ -28,6 +28,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
@@ -112,17 +113,23 @@ data class RouterAcl(
         /** fnmatch-style match: `*` is any run of characters, `?` one character, everything else literal. */
         fun glob(pattern: String, value: String): Boolean {
             if (pattern == "*") return true
-            val regex = buildString {
-                pattern.forEach { ch ->
-                    when (ch) {
-                        '*' -> append(".*")
-                        '?' -> append('.')
-                        else -> append(Regex.escape(ch.toString()))
+            // Compiled once per pattern: a check runs before every call, several times per Overview refresh.
+            val compiled = globs.getOrPut(pattern) {
+                Regex(buildString {
+                    pattern.forEach { ch ->
+                        when (ch) {
+                            '*' -> append(".*")
+                            '?' -> append('.')
+                            else -> append(Regex.escape(ch.toString()))
+                        }
                     }
-                }
+                })
             }
-            return Regex(regex).matches(value)
+            return compiled.matches(value)
         }
+
+        /** The patterns of the logins seen in this process (a few dozen at most), compiled. */
+        private val globs = ConcurrentHashMap<String, Regex>()
     }
 }
 
@@ -159,18 +166,36 @@ private class AccessDenied(message: String?) : IOException(message)
 class UbusClient(
     val router: Router,
     baseHttp: OkHttpClient,
-    initial: RouterSecrets,
+    /** Reads the saved login (Keystore decryption). Called once, on first use and off the main thread. */
+    loadSecrets: () -> RouterSecrets,
     /** The saved setting, not this copy of the router: a client made before read-only was switched on must not keep writing. */
     private val isReadOnly: () -> Boolean = { router.readOnly },
     private val onSecretsChanged: (RouterSecrets) -> Unit = {},
 ) {
-    val http: OkHttpClient = httpFor(baseHttp, router.host, router.certPin)
+    /**
+     * The HTTP client (with the pinned certificate's TLS setup) and the saved login are made on first use
+     * instead of when the client is created, which happens on the main thread while the app starts.
+     * [warm] makes both on a background thread before the first call.
+     */
+    private val lazyHttp = lazy { httpFor(baseHttp, router.host, router.certPin) }
+    private val http: OkHttpClient get() = lazyHttp.value
     private val endpoint: HttpUrl = endpointFor(router.url)
     private val loginLock = Mutex()
+    private val lazySecrets = lazy(loadSecrets)
 
+    /** Replaces the loaded login after signing in again; null until then. */
     @Volatile
-    var secrets: RouterSecrets = initial
-        private set
+    private var updatedSecrets: RouterSecrets? = null
+
+    val secrets: RouterSecrets get() = updatedSecrets ?: lazySecrets.value
+
+    private suspend fun warm() {
+        if (lazyHttp.isInitialized() && lazySecrets.isInitialized()) return
+        withContext(Dispatchers.IO) {
+            lazyHttp.value
+            lazySecrets.value
+        }
+    }
 
     /** What this login may do; known after the first sign-in in this process (null until then). */
     @Volatile
@@ -184,6 +209,7 @@ class UbusClient(
             if (!WriteGuard.check()) throw RouterError.Cancelled()
         }
         acl?.let { if (!it.canCall(obj, method)) throw RouterError.Forbidden("$obj.$method") }
+        warm()
         if (secrets.session.isBlank()) signIn(stale = "")
         val sid = secrets.session
         return try {
@@ -201,20 +227,24 @@ class UbusClient(
     }
 
     /** Signs in again now (to learn what the login may do, or after the password changed). */
-    suspend fun refreshLogin() = signIn(stale = secrets.session, force = true)
+    suspend fun refreshLogin() {
+        warm()
+        signIn(stale = secrets.session, force = true)
+    }
 
     private suspend fun signIn(stale: String, force: Boolean = false) = loginLock.withLock {
         // Another call already signed in again while this one waited.
         if (!force && secrets.session.isNotBlank() && secrets.session != stale) return@withLock
         if (secrets.password.isEmpty()) throw RouterError.Unauthorized(null)
         val res = login(http, router.url, router.username, secrets.password)
-        secrets = secrets.copy(
+        val updated = secrets.copy(
             session = res.session,
             sessionIssuedAt = System.currentTimeMillis(),
             sessionTimeout = res.timeout,
         )
+        updatedSecrets = updated
         acl = res.acl
-        runCatching { onSecretsChanged(secrets) }
+        runCatching { onSecretsChanged(updated) }
     }
 
     companion object {
