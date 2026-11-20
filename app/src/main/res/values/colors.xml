@@ -2,7 +2,7 @@
 <resources>
     <!-- Signal Light window background (values-night has the dark one). -->
     <color name="window_bg">#FFF5F5F1</color>
-    <color name="ic_bg">#FF08080A</color>
+    <color name="ic_bg">#FF121418</color>
 
     <!-- Signal colours for the home-screen widgets (light; values-night has dark). -->
     <color name="signal_widget_bg">#FFFFFFFF</color>
