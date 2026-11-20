@@ -4,6 +4,32 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+Not released yet: these changes are on `main` and get a version number when the next release is made. Built and checked by CI only: nothing here has been run on a phone.
+
+### Security
+
+- **Device nicknames and notes are now encrypted on the phone.** The nicknames and notes you type for devices used to sit as readable text in the app's private settings (`client_notes`). They are now kept in one encrypted file per router (`client_notes/<router id>.json` in the app's private storage, AES-256-GCM).
+- **The background checks' saved state is now encrypted too.** To announce only new devices, the background checks remember every device (MAC address) they have seen, per router, next to the last check's result (`notify/<router id>.json`). That file is now encrypted the same way.
+- **How the key works.** WrtCtrl makes one random 256-bit data key and stores it in `data.key` in its private storage, itself encrypted by a key in the Android Keystore that can't be taken off the phone (in the StrongBox security chip when the phone has one). That Keystore key is separate from the ones that protect your router logins and the app lock, which are untouched. It needs no fingerprint or PIN, so background checks keep working while the phone and WrtCtrl are locked. What this protects against: someone reading WrtCtrl's files copied off the phone. It does not depend on the app lock, and it does not protect against something that controls the running app.
+- **Your existing data is moved, not rewritten in place.** The first start after updating seals what's there, in the background. Nicknames and notes: an encrypted copy is written to a temporary file, read back from disk, decrypted and compared with the original, and only then put in place; the old readable copy is removed last. If the app is stopped half-way, either the old copy is still there or both are (and say the same), and the next start finishes the job. The background checks' state is sealed with the same write, check and swap. Both the old and the new form are read, now and in later versions.
+- **If the key can't be had** (the phone's Keystore doesn't work), nothing changes: WrtCtrl keeps reading and saving nicknames, notes and check state the way it did before, unencrypted, and tries again at the next start.
+- **If encrypted nicknames and notes can't be opened** (the Keystore key is gone or the file is damaged), WrtCtrl never deletes or overwrites them. The Clients tab and a device's page show **Can't open your nicknames and notes** with **Try again** and **Start empty**; until then devices show without nicknames and saving a note says it wasn't saved. **Start empty** asks first, then renames the unreadable file to `<router id>.json.unreadable` (kept on the phone, not deleted) so you can save new ones. An unusable `data.key` is never replaced, so after that new nicknames and notes are saved unencrypted, as before this change. Removing the router from WrtCtrl still removes everything kept about it, including that set-aside file.
+- **If the encrypted check state can't be opened**, it is dropped and the next background check starts over, as if it were the first one: it records the devices it sees without announcing them as new, and it may notify once more about something you were already told about (package updates, or a router that still can't be reached).
+- **Going back to an older version of WrtCtrl:** an older version can't read the encrypted files. It would show your devices without nicknames and notes (they come back when you update again; anything saved in the older version in the meantime is merged in, and wins for a device that has both) and start the background checks over. WrtCtrl has no export for nicknames and notes, so don't install an older version over this one if you rely on them.
+
+### Not encrypted, and why
+
+- **The list of routers** (name, address, user name, last seen model and OpenWrt version) and **the app's settings** stay in the app's private settings as before. They are read the moment the app starts, to decide which screen to show; encrypting them would mean asking the Keystore on the main thread at every start (which was just removed to make the app start faster) or showing a wrong "no router yet" screen while the key loads. Router passwords and sessions were already encrypted and are unchanged, as are the app lock's own files.
+- **The ntfy push address and the push registration** stay as they are: the push receiver reads them the moment a push arrives.
+- **Configuration backups** are written straight to the file you pick in Android's file picker, in OpenWrt's own format, exactly as before. WrtCtrl keeps no copy.
+- WrtCtrl keeps no other lists on the phone: the Overview, the client list, the logs and the graphs are read from the router each time and only held in memory.
+
+### Changed
+
+- Saving a nickname or note now happens on a background thread (it used to be written from the main thread), and reading them while the client list loads does too.
+
 ## v1.2.0 (2026-11-20)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published.

@@ -341,7 +341,7 @@ Turn it on: tap your profile picture › **Settings › Privacy and security ›
 
 ## Privacy
 
-**Telemetry-free and Google-free.** WrtCtrl has no analytics, crash reporting, usage stats, ads or tracking of any kind, no update checks, and no Google libraries or services. It never reads the name of the Wi-Fi network you're on. Device vendors are looked up in a list built into the app ([oui-data](https://github.com/silverwind/oui-data), from the IEEE registry), and your public IP is read from the router itself, so nothing about your network is sent anywhere else. Nicknames and notes for devices stay on the phone. Router passwords are encrypted with the Android Keystore (in the StrongBox security chip when the phone has one) and never written to a log, and nothing is included in Android backups or moved to a new phone.
+**Telemetry-free and Google-free.** WrtCtrl has no analytics, crash reporting, usage stats, ads or tracking of any kind, no update checks, and no Google libraries or services. It never reads the name of the Wi-Fi network you're on. Device vendors are looked up in a list built into the app ([oui-data](https://github.com/silverwind/oui-data), from the IEEE registry), and your public IP is read from the router itself, so nothing about your network is sent anywhere else. Nicknames and notes for devices stay on the phone, encrypted at rest, as is the list of devices the background checks have seen (see [Encryption at rest](#encryption-at-rest)). Router passwords are encrypted with the Android Keystore (in the StrongBox security chip when the phone has one) and never written to a log, and nothing is included in Android backups or moved to a new phone.
 
 Everything WrtCtrl connects to:
 
@@ -352,6 +352,15 @@ Links that open in your browser only when you tap them (the app itself doesn't c
 
 - **About:** Support (GitHub Sponsors), Report a bug and Source code (github.com), and Licence (gnu.org).
 - **Install ntfy** on the Notifications page (f-droid.org).
+
+### Encryption at rest
+
+What WrtCtrl keeps on the phone about your network is encrypted where that doesn't get in the way:
+
+- **Encrypted:** your nicknames and notes for devices, and the list of devices (MAC addresses) the background checks have seen. They are sealed with AES-256-GCM under a key that is itself protected by the Android Keystore (in the StrongBox security chip when the phone has one). Router passwords and sessions have their own Keystore encryption, and the app lock adds your PIN on top.
+- **Not encrypted:** the list of routers (name, address, user name, last seen model and version), the app's settings and your ntfy push address. They are read the moment the app starts or a push arrives. They sit in the app's private storage, which other apps can't read, and are never backed up.
+- **What it's for:** files copied off the phone can't be read without the phone's Keystore. The key needs no fingerprint or PIN (background checks have to work while everything is locked), so this doesn't replace the app lock or your phone's screen lock.
+- **If the key is ever lost,** WrtCtrl doesn't delete what it can't open: it tells you on the Clients tab, with **Try again** and **Start empty**. An older version of WrtCtrl can't read the encrypted files, so don't install an older version over a newer one if you rely on your nicknames and notes.
 
 ## How WrtCtrl is made
 

@@ -14,6 +14,7 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.vknxworks.wrtctrl.container
 import com.vknxworks.wrtctrl.data.api.UbusJson
+import com.vknxworks.wrtctrl.data.crypto.DataKeys
 import com.vknxworks.wrtctrl.data.lock.AppLock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +24,11 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.concurrent.TimeUnit
 
-/** Saved [CheckState] per router, in no-backup storage. */
+/**
+ * Saved [CheckState] per router, in no-backup storage. It lists every device a check has seen, so it's
+ * encrypted at rest (SealedCache). A saved state that can't be opened counts as "no check yet": it is
+ * dropped and the next check starts over, recording the devices it sees without announcing them.
+ */
 object CheckStore {
     private val _lastCheck = MutableStateFlow<Map<String, CheckState>>(emptyMap())
 
@@ -35,19 +40,28 @@ object CheckStore {
     private fun file(context: Context, routerId: String) = File(dir(context).apply { mkdirs() }, "$routerId.json")
 
     suspend fun read(context: Context, routerId: String): CheckState = withContext(Dispatchers.IO) {
-        val s = runCatching { UbusJson.decodeFromString(CheckState.serializer(), file(context, routerId).readText()) }.getOrNull() ?: CheckState()
+        val s = runCatching {
+            DataKeys.cache(context).read(file(context, routerId))?.let { UbusJson.decodeFromString(CheckState.serializer(), it.toString(Charsets.UTF_8)) }
+        }.getOrNull() ?: CheckState()
         _lastCheck.value = _lastCheck.value + (routerId to s)
         s
     }
 
     suspend fun write(context: Context, routerId: String, state: CheckState) = withContext(Dispatchers.IO) {
-        runCatching { file(context, routerId).writeText(UbusJson.encodeToString(CheckState.serializer(), state)) }
+        runCatching {
+            DataKeys.cache(context).write(file(context, routerId), UbusJson.encodeToString(CheckState.serializer(), state).toByteArray(Charsets.UTF_8))
+        }
         _lastCheck.value = _lastCheck.value + (routerId to state)
     }
 
     fun forget(context: Context, routerId: String) {
-        runCatching { file(context, routerId).delete() }
+        runCatching { DataKeys.cache(context).delete(file(context, routerId)) }
         _lastCheck.value = _lastCheck.value - routerId
+    }
+
+    /** Seals the states an older version left as ordinary files. Off the main thread; safe at every start. */
+    fun sealExisting(context: Context) {
+        runCatching { DataKeys.cache(context).sealAll(dir(context)) }
     }
 }
 

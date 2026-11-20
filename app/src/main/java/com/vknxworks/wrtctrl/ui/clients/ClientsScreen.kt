@@ -149,6 +149,7 @@ fun ClientsScreen() {
             }
         }
         data.error?.let { ErrorCard(it, router?.host.orEmpty(), onRetry = { data.refresh() }) }
+        NotesUnreadableCard(router?.id, onChanged = { data.refresh() })
         PullToRefreshBox(
             isRefreshing = refreshing,
             onRefresh = {

@@ -155,6 +155,16 @@ class AppContainer(val context: Context) {
         // Seal any login left unsealed (WrtCtrl stopped between setting up the lock and sealing them).
         if (vault.enabled) appScope.launch(Dispatchers.Default) { runCatching { routerStore.resealAll(sealing()) } }
     }
+
+    init {
+        // Encryption at rest: what an older version saved as ordinary data (the device nicknames and notes,
+        // the background checks' saved state) is sealed once, in the background. Nothing waits for it:
+        // both kinds are read either way.
+        appScope.launch(Dispatchers.IO) {
+            runCatching { ClientNotes.migrate(context) }
+            CheckStore.sealExisting(context)
+        }
+    }
 }
 
 val Context.container: AppContainer

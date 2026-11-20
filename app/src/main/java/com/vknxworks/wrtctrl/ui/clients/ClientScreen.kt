@@ -90,7 +90,9 @@ import com.vknxworks.wrtctrl.ui.components.rememberRouterData
 import com.vknxworks.wrtctrl.ui.theme.CtrlColors
 import com.vknxworks.wrtctrl.ui.theme.CtrlType
 import com.vknxworks.wrtctrl.ui.theme.Gutter
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** AdCtrl's package: "Open in AdCtrl" shows when it's installed. */
 private const val ADCTRL = "com.vknxworks.adctrl"
@@ -142,6 +144,7 @@ fun ClientScreen(mac: String) {
         ScreenTopBar(cl?.name?.ifBlank { null } ?: cl?.vendor ?: mac)
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 24.dp)) {
             data.error?.let { ErrorCard(it, router?.host.orEmpty(), onRetry = { data.refresh() }) }
+            NotesUnreadableCard(router?.id, onChanged = { data.refresh() })
             if (cl == null) {
                 if (data.value == null && !data.loading && data.error == null) {
                     Text(stringResource(R.string.client_gone), color = CtrlColors.Muted, modifier = Modifier.padding(Gutter))
@@ -357,8 +360,12 @@ fun ClientScreen(mac: String) {
         if (notesDialog) {
             NotesDialog(cl, onDismiss = { notesDialog = false }) { note ->
                 notesDialog = false
-                ClientNotes.set(context, router?.id.orEmpty(), cl.mac, note)
-                scope.launch { data.refresh() }
+                scope.launch {
+                    // Off the main thread: the notes are encrypted at rest.
+                    val saved = withContext(Dispatchers.IO) { ClientNotes.set(context, router?.id.orEmpty(), cl.mac, note) }
+                    if (!saved) toast(context.getString(R.string.notes_not_saved))
+                    data.refresh()
+                }
             }
         }
     }

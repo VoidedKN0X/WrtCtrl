@@ -18,10 +18,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.MapSerializer
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.json.Json
 
 /** How a device is connected right now. */
 sealed interface Link {
@@ -96,7 +92,8 @@ suspend fun loadClients(context: Context, client: UbusClient, routerId: String, 
     val wifi = wifiD.await()
     val hosts = hostsD.await()
     val rules = rulesD.await()
-    val notes = ClientNotes.all(context, routerId)
+    // Off the main thread: the notes are encrypted at rest, and opening them can ask the secure hardware for the key.
+    val notes = withContext(Dispatchers.IO) { ClientNotes.all(context, routerId) }
 
     val macs = linkedSetOf<String>()
     leases.forEach { macs += it.mac }
@@ -169,29 +166,3 @@ suspend fun UbusClient.stageUpdateBlock(rule: UciSection, target: BlockTarget, s
 
 /** Removes a block; refuses any firewall rule whose name doesn't start with [BLOCK_RULE_PREFIX]. */
 suspend fun UbusClient.stageUnblock(rule: UciSection) = stage(BlockRules.unblockOps(rule))
-
-// ---------- Nicknames and notes (on the phone only) ----------
-
-@Serializable
-data class ClientNote(val nickname: String = "", val note: String = "")
-
-/** Nicknames and notes for devices, per router. Stored on the phone only, never sent to the router. */
-object ClientNotes {
-    private val json = Json { ignoreUnknownKeys = true }
-    private val ser = MapSerializer(String.serializer(), ClientNote.serializer())
-
-    private fun prefs(context: Context) = context.getSharedPreferences("client_notes", Context.MODE_PRIVATE)
-
-    fun all(context: Context, routerId: String): Map<String, ClientNote> =
-        runCatching { json.decodeFromString(ser, prefs(context).getString(routerId, null) ?: "{}") }.getOrDefault(emptyMap())
-
-    fun set(context: Context, routerId: String, mac: String, note: ClientNote) {
-        val map = all(context, routerId).toMutableMap()
-        if (note.nickname.isBlank() && note.note.isBlank()) map.remove(mac) else map[mac] = note
-        prefs(context).edit().putString(routerId, json.encodeToString(ser, map)).apply()
-    }
-
-    fun forget(context: Context, routerId: String) {
-        prefs(context).edit().remove(routerId).apply()
-    }
-}

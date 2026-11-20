@@ -313,6 +313,13 @@
     <string name="client_notes">Nickname and notes</string>
     <string name="client_notes_sub">Only on this phone</string>
     <string name="client_notes_body">Kept on this phone only, never sent to the router.</string>
+    <string name="notes_unreadable_title">Can’t open your nicknames and notes</string>
+    <string name="notes_unreadable_body">The nicknames and notes you saved for this router’s devices are encrypted on this phone, and the key to open them isn’t available or the file is damaged. They are kept as they are and nothing is overwritten; until they open, devices show without nicknames and new notes can’t be saved.</string>
+    <string name="notes_unreadable_retry">Try again</string>
+    <string name="notes_unreadable_start_empty">Start empty</string>
+    <string name="notes_start_empty_title">Start with empty nicknames and notes?</string>
+    <string name="notes_start_empty_body">The saved nicknames and notes for this router that can’t be opened are set aside on this phone, not deleted, but WrtCtrl can’t show them again. You can then save new ones.</string>
+    <string name="notes_not_saved">The nickname and note weren’t saved</string>
     <string name="client_open_adctrl">Open in AdCtrl</string>
     <string name="client_open_adctrl_sub">DNS filtering and this device’s queries</string>
     <string name="read_only_actions_hidden">Read-only mode is on for this router, so changes are off. Turn it off on the You page.</string>

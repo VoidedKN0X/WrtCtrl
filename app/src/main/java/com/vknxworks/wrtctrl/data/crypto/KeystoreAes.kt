@@ -27,6 +27,15 @@ object KeystoreAes {
         handles[alias] ?: loadOrCreate(alias).also { handles[alias] = it }
     }
 
+    /**
+     * The key called [alias] only if it already exists; never makes one. For decrypting: a key that's gone
+     * must show as "no key", not be quietly replaced by a new one that can't open anything.
+     */
+    fun existing(alias: String): SecretKey? = handles[alias] ?: synchronized(this) {
+        handles[alias] ?: (KeyStore.getInstance(PROVIDER).apply { load(null) }.getKey(alias, null) as? SecretKey)
+            ?.also { handles[alias] = it }
+    }
+
     private fun loadOrCreate(alias: String): SecretKey {
         val ks = KeyStore.getInstance(PROVIDER).apply { load(null) }
         (ks.getKey(alias, null) as? SecretKey)?.let { return it }
