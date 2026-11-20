@@ -3,6 +3,7 @@ package com.vknxworks.wrtctrl.data.api
 import com.vknxworks.wrtctrl.data.router.Router
 import com.vknxworks.wrtctrl.data.router.RouterSecrets
 import com.vknxworks.wrtctrl.data.router.Tls
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -28,6 +29,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
+import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import javax.net.ssl.SSLContext
@@ -226,10 +228,57 @@ class UbusClient(
         }
     }
 
-    /** Signs in again now (to learn what the login may do, or after the password changed). */
-    suspend fun refreshLogin() {
+    /**
+     * Makes sure this client knows what the login may do ([acl]), signing in only when it has to.
+     *
+     * A saved session that rpcd still knows is kept instead of signing in again, which would leave one
+     * more session on the router and send the password once more:
+     *  - this client, or an earlier one in this process, already learned the ACL of this very session
+     *    (rpcd fixes a session's ACL at sign-in), or
+     *  - the session was issued less than its timeout ago, so rpcd can't have timed it out yet (every
+     *    use only pushes the timeout further), and rpcd lists its ACL: `session access` with only the
+     *    session ID answers with the same `ubus` / `uci` / `file` tables `session login` puts under
+     *    `acls` (rpcd session.c, rpc_handle_access). Logins whose ACL doesn't include `session access`,
+     *    routers that restarted and older rpcd versions answer with an error instead.
+     * Anything else, and always with [force] (the user asked to try again), signs in with the saved
+     * password as before. Returns true when it signed in, false when the saved session was kept; a kept
+     * session that ended after all is replaced by the first call made with it (see [call]).
+     */
+    suspend fun refreshLogin(force: Boolean = false): Boolean {
         warm()
+        if (!force && keepSession()) return false
         signIn(stale = secrets.session, force = true)
+        return true
+    }
+
+    private suspend fun keepSession(): Boolean = loginLock.withLock {
+        val current = secrets
+        if (current.session.isBlank()) return@withLock false
+        if (acl != null) return@withLock true
+        knownAcls[router.id]?.let { known ->
+            if (known.sessionHash == hashOf(current.session)) {
+                acl = known.acl
+                return@withLock true
+            }
+        }
+        val age = System.currentTimeMillis() - current.sessionIssuedAt
+        if (current.sessionIssuedAt <= 0 || current.sessionTimeout <= 0 || age < 0 || age >= current.sessionTimeout * 1000) {
+            return@withLock false
+        }
+        val reply = try {
+            rawCall(http, endpoint, current.session, "session", "access", EMPTY)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Not allowed, unknown session, an rpcd without this answer, or no connection: sign in instead.
+            return@withLock false
+        }
+        // Only a real ACL listing counts: at least one ubus object, and not the yes / no answer to a single check.
+        if (reply["access"] != null || (reply["ubus"] as? JsonObject).isNullOrEmpty()) return@withLock false
+        val listed = RouterAcl.parse(reply)
+        acl = listed
+        knownAcls[router.id] = KnownAcl(hashOf(current.session), listed)
+        true
     }
 
     private suspend fun signIn(stale: String, force: Boolean = false) = loginLock.withLock {
@@ -244,6 +293,7 @@ class UbusClient(
         )
         updatedSecrets = updated
         acl = res.acl
+        knownAcls[router.id] = KnownAcl(hashOf(res.session), res.acl)
         runCatching { onSecretsChanged(updated) }
     }
 
@@ -254,6 +304,15 @@ class UbusClient(
         val EMPTY = JsonObject(emptyMap())
 
         private val JSON_TYPE = "application/json".toMediaType()
+
+        /** The ACL of a session, kept under a hash of its ID so the ID itself isn't held here while the app is locked. */
+        private class KnownAcl(val sessionHash: String, val acl: RouterAcl)
+
+        /** Per router ID: the ACL of the session last signed in (or checked) in this process. Memory only. */
+        private val knownAcls = ConcurrentHashMap<String, KnownAcl>()
+
+        private fun hashOf(session: String): String =
+            MessageDigest.getInstance("SHA-256").digest(session.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
         private val ids = AtomicInteger()
 
         fun endpointFor(baseUrl: String): HttpUrl = "${baseUrl.trimEnd('/')}/ubus".toHttpUrl()

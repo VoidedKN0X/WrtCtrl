@@ -132,7 +132,7 @@ fun OverviewScreen() {
                     )
                 }
                 val err = access.error ?: data.error
-                if (err != null) item("error") { ErrorCard(err, router?.host.orEmpty(), onRetry = { c.sessions.refreshAccess(); slow.clear(); data.refresh() }) }
+                if (err != null) item("error") { ErrorCard(err, router?.host.orEmpty(), onRetry = { c.sessions.refreshAccess(force = true); slow.clear(); data.refresh() }) }
                 if (snap != null) {
                     val wan = snap.interfaces.wan()
                     item("throughput") { ThroughputCard(rates, wan) }

@@ -104,10 +104,16 @@ class Sessions(
         )
 
     /**
-     * Signs in to the active router (which also tells what the login may do) and reads what the router
-     * is. Keeps the saved model, hostname and OpenWrt version up to date.
+     * Learns what the active router's login may do and reads what the router is. Keeps the saved model,
+     * hostname and OpenWrt version up to date.
+     *
+     * A saved session that is still good is kept (see [UbusClient.refreshLogin]); otherwise, and always
+     * with [force] (the user tapped Retry), this signs in with the saved password. A kept session is
+     * proven by the `system board` call that follows: if rpcd ended it, that call signs in again and the
+     * ACL is read after it. A login that may not read `system board` can't be proven that way, so it
+     * signs in as before.
      */
-    fun refreshAccess() {
+    fun refreshAccess(force: Boolean = false) {
         accessJob?.cancel()
         val current = active.value
         if (current == null) {
@@ -117,9 +123,11 @@ class Sessions(
         _access.value = _access.value.copy(loading = true, error = null)
         accessJob = scope.launch {
             try {
-                current.client.refreshLogin()
+                val signedIn = current.client.refreshLogin(force)
+                if (!signedIn && current.client.acl?.canCall("system", "board") != true) current.client.refreshLogin(force = true)
+                val board = if (current.client.acl?.canCall("system", "board") == true) current.client.board() else null
+                // Read after the call: a kept session that had ended was replaced by it, with that sign-in's ACL.
                 val acl = current.client.acl ?: RouterAcl.NONE
-                val board = if (acl.canCall("system", "board")) current.client.board() else null
                 if (board != null) {
                     val r = current.router
                     val version = board.release.version
