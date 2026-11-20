@@ -121,8 +121,6 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.okhttp)
-    // Home-screen widgets (Jetpack Glance).
-    implementation(libs.androidx.glance.appwidget)
     // App lock: fingerprint, face or screen lock (AOSP BiometricPrompt).
     implementation(libs.androidx.biometric)
     // MainActivity is a FragmentActivity, which BiometricPrompt needs.

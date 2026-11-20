@@ -15,7 +15,6 @@ import androidx.work.workDataOf
 import com.vknxworks.wrtctrl.container
 import com.vknxworks.wrtctrl.data.api.UbusJson
 import com.vknxworks.wrtctrl.data.lock.AppLock
-import com.vknxworks.wrtctrl.data.widgets.WidgetData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -75,8 +74,6 @@ class NotifyWorker(context: Context, params: WorkerParameters) : CoroutineWorker
             result.post.forEach { Notifier.post(applicationContext, it) }
             CheckStore.write(applicationContext, router.id, result.state)
         }
-        // Widgets get fresh numbers with every check.
-        runCatching { WidgetData.refresh(applicationContext) }
         return Result.success()
     }
 

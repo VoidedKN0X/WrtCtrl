@@ -16,7 +16,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **System**: services, package updates (with `apk` or `opkg`, whichever your router has), the system log, reboot and config backups
 - **Changes that could cut you off are undone automatically**: Wi-Fi, DHCP and firewall changes (including port forwards and blocking a device) are applied with OpenWrt's rollback. If WrtCtrl can't reach the router afterwards, the router puts the old settings back by itself. Restarting an interface, rebooting and package upgrades can't be rolled back, so WrtCtrl asks first (for the LAN, the WAN and a reboot you type the name to confirm)
 - **Notifications**: router unreachable, WAN down or back up, a new device, and a daily package-update digest, from WrtCtrl's own background checks, woken at once by your **self-hosted ntfy** (push from the router's hotplug scripts)
-- **Quick Settings tile** for guest Wi-Fi, a **home screen widget** (WAN status, throughput, online devices) and **app shortcuts** (Clients, Guest Wi-Fi, Reboot)
+- **App shortcuts** (Clients, Guest Wi-Fi, Reboot)
 - **Several routers**, such as a main router and a dumb access point
 - **App lock** with its own PIN and optional fingerprint unlock, a **read-only mode** per router, certificate pinning, and optional **Hide in screenshots** and **Hide in recent apps**
 
@@ -60,12 +60,12 @@ If the Obtainium button doesn't open the app, add `https://github.com/VoidedKN0X
 | Permission | What WrtCtrl uses it for |
 | --- | --- |
 | Internet (`INTERNET`) | Talking to your own routers, and nothing else |
-| Network state (`ACCESS_NETWORK_STATE`) | Waiting for a network before background checks and widget refreshes run. It never reads the Wi-Fi name |
+| Network state (`ACCESS_NETWORK_STATE`) | Waiting for a network before background checks run. It never reads the Wi-Fi name |
 | Biometrics (`USE_BIOMETRIC`) | Optional fingerprint unlock for the app lock, and for **Confirm changes** |
 | Hide other apps' floating windows (`HIDE_OVERLAY_WINDOWS`) | Hide other apps' floating windows over the PIN screen: while the lock, PIN, a password or key, or a confirmation shows, no chat head or overlay can sit on top of it. Granted at install, no prompt; overlays work as usual everywhere else |
 | Notifications (`POST_NOTIFICATIONS`) | Router alerts, only if you turn them on |
-| Run at startup (`RECEIVE_BOOT_COMPLETED`) | Putting the background checks and widget refreshes back on schedule after the phone restarts. Added by Android's background work library (WorkManager) |
-| Keep awake (`WAKE_LOCK`) | Keeping the phone awake for the few seconds a background check or widget refresh runs. Added by WorkManager |
+| Run at startup (`RECEIVE_BOOT_COMPLETED`) | Putting the background checks back on schedule after the phone restarts. Added by Android's background work library (WorkManager) |
+| Keep awake (`WAKE_LOCK`) | Keeping the phone awake for the few seconds a background check runs. Added by WorkManager |
 
 `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` is an internal permission Android adds to every app built for Android 13 and newer; it lets WrtCtrl keep its own broadcasts private. WrtCtrl has no location, camera, microphone, contacts, storage or foreground-service permission, and can't read the name of your Wi-Fi network.
 
@@ -318,10 +318,8 @@ uclient-fetch -q -O /dev/null --post-data="lease" "$PUSH"
 
 `uclient-fetch` is built into OpenWrt; with curl installed, `curl -fsS -d check "$PUSH" >/dev/null` does the same. A WAN-down push can only go out once the router reaches your ntfy server again, so if ntfy runs outside your home, WAN down is caught by the regular background check instead. Allow ntfy to run unrestricted in the background (WrtCtrl shows a row for it under **Battery** when it isn't).
 
-## Widget, tile and shortcuts
+## App shortcuts
 
-- **Widget:** add **Router** from your home screen's widget list: WAN status, WAN throughput, online devices and the WAN address of the router you have selected. It refreshes when you open WrtCtrl, with every background check and at least every 30 minutes, and never changes anything.
-- **Quick Settings tile:** **Guest Wi-Fi** switches every guest network of the selected router on or off (applied with rollback). With the app lock's **Confirm changes** on, in read-only mode, or while WrtCtrl is locked, it opens WrtCtrl instead (and asks for your PIN first).
 - **App shortcuts** (long-press the icon): **Clients**, **Guest Wi-Fi** (opens the Network tab) and **Reboot** (opens the confirmation; you still type the hostname).
 
 ## App lock
@@ -332,12 +330,12 @@ Turn it on: tap your profile picture › **Settings › Privacy and security ›
 - **Unlock with fingerprint** (optional) only accepts strong biometrics, such as the fingerprint sensor, checked by the phone's secure hardware. Face unlock that only uses the camera isn't accepted. The PIN is still needed after the phone restarts and at least every 72 hours, and adding a new fingerprint to the phone turns fingerprint unlock off until you turn it on again.
 - **Your router logins are encrypted with the PIN while WrtCtrl is locked.** The key only exists in memory while the app is unlocked and is wiped the moment it locks, and nothing is sent to your routers until you unlock. The PIN itself is never stored: it's stretched with 600,000 rounds of PBKDF2 and mixed with a key held in the phone's secure hardware, so a copy of the app's files isn't enough to guess it on a computer.
 - **Wrong PINs:** after 5 tries you wait 30 seconds, doubling up to 15 minutes. Restarting the app or the phone, or changing the clock, doesn't skip the wait.
-- **Lock again:** as soon as you leave the app (the default), after 1, 5 or 15 minutes or 1 hour away, or only when the app restarts. Opening a link or Android's settings from WrtCtrl doesn't count as leaving, unless you stay away for more than 5 minutes. Once the time has run out, the widget, the Quick Settings tile and the background checks treat WrtCtrl as locked straight away, without waiting for you to open it again.
+- **Lock again:** as soon as you leave the app (the default), after 1, 5 or 15 minutes or 1 hour away, or only when the app restarts. Opening a link or Android's settings from WrtCtrl doesn't count as leaving, unless you stay away for more than 5 minutes. Once the time has run out, the background checks treat WrtCtrl as locked straight away, without waiting for you to open it again.
 - **Change app PIN** asks for your current PIN first, and turning the app lock off asks for the PIN too.
 - **Forgot your PIN?** It can't be recovered, because it encrypts your router logins. The lock screen offers to remove your routers from the phone, so you can add them again; nothing changes on your routers.
 - **Confirm changes** (optional) asks for your fingerprint or app PIN before anything that changes a router: Wi-Fi, DHCP, port forwards, services, reboots and upgrades. One confirmation covers the next minute.
-- **The Quick Settings tile** never switches anything while WrtCtrl is locked: it opens WrtCtrl, which asks for your PIN first. With **Confirm changes** on it always opens WrtCtrl. **App shortcuts** and the widget only open WrtCtrl, behind the lock screen; the Reboot shortcut then still asks you to type the hostname.
-- **Background checks while locked** (optional): notifications, the widget and the tile keep working while WrtCtrl is locked, but your router logins are then only encrypted with the Android Keystore, as without the app lock. Leave it off to keep them sealed with your PIN; the widget then only says that WrtCtrl is locked.
+- **App shortcuts** only open WrtCtrl, behind the lock screen; the Reboot shortcut then still asks you to type the hostname.
+- **Background checks while locked** (optional): notifications keep working while WrtCtrl is locked, but your router logins are then only encrypted with the Android Keystore, as without the app lock. Leave it off to keep them sealed with your PIN.
 
 **Hide in screenshots** and **Hide in recent apps** (in the same section, also without the app lock, both off by default): the first keeps WrtCtrl out of screenshots and screen recordings (and blanks its recent-apps preview), the second shows a blank card for WrtCtrl in the recent-apps view while screenshots still work. With the app lock on, the recent-apps view always shows a blank card. Signing in to a router, the Wi-Fi password dialog, your ntfy push address, the lock screen and the PIN screens are always kept out of screenshots, and a copied push address is marked as sensitive so it doesn't show in clipboard previews.
 

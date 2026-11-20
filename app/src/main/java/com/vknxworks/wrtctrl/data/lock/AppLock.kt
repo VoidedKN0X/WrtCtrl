@@ -201,7 +201,7 @@ object AppLock {
     }
 
     /**
-     * Locked, for callers outside the app's screens (the tile): also true once the "Lock again" time has run
+     * Locked, for callers outside the app's screens: also true once the "Lock again" time has run
      * out while WrtCtrl sat in the background, which [state] only notices when the app comes back on screen.
      */
     fun lockedNow(): Boolean {
@@ -214,7 +214,7 @@ object AppLock {
 
     /**
      * Locks now when WrtCtrl has been away for longer than the "Lock again" time. Leaving the app only notes
-     * the time and [onForeground] locks when it comes back on screen, so the widget, the tile and the
+     * the time and [onForeground] locks when it comes back on screen, so the
      * background checks, which work without WrtCtrl on screen, call this first. Main thread only.
      */
     fun lockIfExpired() {

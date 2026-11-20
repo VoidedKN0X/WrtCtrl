@@ -11,7 +11,6 @@ import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.Lock
-import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Palette
@@ -48,7 +47,7 @@ import com.vknxworks.wrtctrl.ui.components.GroupSwitch
 import com.vknxworks.wrtctrl.ui.components.ScreenTopBar
 import kotlinx.coroutines.launch
 
-/** App settings (Ctrl / Signal is dark only, so there is no appearance section): notifications, privacy and security (app lock), warning thresholds and widgets. */
+/** App settings (Ctrl / Signal is dark only, so there is no appearance section): notifications, privacy and security (app lock), warning thresholds. */
 @Composable
 fun SettingsScreen() {
     val context = LocalContext.current

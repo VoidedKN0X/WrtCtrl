@@ -19,7 +19,7 @@ Only the latest release gets security fixes. Please update before reporting, and
 
 - Your router password, ubus session, Wi-Fi passwords or other data leaking to anyone other than your own OpenWrt router
 - WrtCtrl accepting a router certificate you didn't confirm, or sending anything over plain HTTP that you didn't allow
-- Ways around the app lock (including from the widget, the Quick Settings tile, app shortcuts or notifications), or protected screens showing up in screenshots when they shouldn't
+- Ways around the app lock (including from app shortcuts or notifications), or protected screens showing up in screenshots when they shouldn't
 - A change to your router (Wi-Fi, firewall, port forwards, interfaces, reboot, packages) happening without your confirmation, or a risky change skipping OpenWrt's rollback
 - Another app on the phone being able to make WrtCtrl do something you didn't ask for
 - Anything that lets someone run code or read files they shouldn't

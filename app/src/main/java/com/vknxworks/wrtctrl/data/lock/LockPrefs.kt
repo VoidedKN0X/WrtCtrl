@@ -15,7 +15,7 @@ class LockPrefs(context: Context) {
     private var _background by mutableStateOf(prefs.getBoolean(KEY_BACKGROUND, false))
 
     /**
-     * On: notifications, widgets and the tile keep checking your routers while WrtCtrl is locked, so the
+     * On: notifications keep checking your routers while WrtCtrl is locked, so the
      * logins stay encrypted with the Keystore only. Off: the logins are also sealed with the app PIN and
      * background checks pause until you unlock.
      */

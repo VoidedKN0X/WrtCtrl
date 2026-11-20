@@ -67,7 +67,6 @@ import com.vknxworks.wrtctrl.ui.system.PackagesScreen
 import com.vknxworks.wrtctrl.ui.system.RebootRequest
 import com.vknxworks.wrtctrl.ui.system.ServicesScreen
 import com.vknxworks.wrtctrl.ui.system.SystemScreen
-import com.vknxworks.wrtctrl.ui.widgets.Shortcuts
 import androidx.compose.runtime.LaunchedEffect
 import com.vknxworks.wrtctrl.ui.settings.SettingsScreen
 import com.vknxworks.wrtctrl.ui.settings.YouScreen
@@ -119,13 +118,12 @@ private fun MainScaffold() {
         }
     }
 
-    // App shortcuts, the widget and the tile: go to the right tab (the reboot shortcut opens its confirmation).
+    // App shortcuts: go to the right tab (the reboot shortcut opens its confirmation).
     val shortcut by Shortcuts.pending.collectAsStateWithLifecycle()
     LaunchedEffect(shortcut) {
         val target = shortcut ?: return@LaunchedEffect
         Shortcuts.consumed()
         when (target) {
-            Shortcuts.Target.OVERVIEW -> selectTab(topDestinations.indexOfFirst { it.route == OverviewRoute })
             Shortcuts.Target.CLIENTS -> selectTab(topDestinations.indexOfFirst { it.route == ClientsRoute })
             Shortcuts.Target.GUEST -> selectTab(topDestinations.indexOfFirst { it.route == NetworkRoute })
             Shortcuts.Target.REBOOT -> {

@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
  * HTTPS.
  *
  * Installed as a network interceptor on the shared client, so every hop is checked (also background
- * checks and widgets): an HTTP hop is only allowed when the call itself was
+ * checks): an HTTP hop is only allowed when the call itself was
  * started for an allowed HTTP address, so an HTTPS request can never end up on plain HTTP.
  */
 object CleartextPolicy {

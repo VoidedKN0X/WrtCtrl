@@ -166,10 +166,10 @@ private suspend fun awaitOnScreen(lifecycle: Lifecycle, windowInfo: WindowInfo) 
     snapshotFlow { windowInfo.isWindowFocused }.first { it }
 }
 
-/** Background checks stay on when they're in use (notifications or widgets), so turning the lock on doesn't silently stop them. */
+/** Background checks stay on when they're in use (notifications), so turning the lock on doesn't silently stop them. */
 private suspend fun defaultBackgroundChecks(c: AppContainer): Boolean {
     val n = c.notifySettings.current()
-    return n.polling || n.push || com.vknxworks.wrtctrl.data.widgets.WidgetData.anyWidgets(c.context)
+    return n.polling || n.push
 }
 
 @Composable

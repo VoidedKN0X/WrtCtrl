@@ -13,7 +13,7 @@
          Android 15, where USE_BIOMETRIC above is what the fingerprint unlock uses, so it's removed. -->
     <uses-permission android:name="android.permission.USE_FINGERPRINT" tools:node="remove" />
     <!-- WorkManager adds the foreground-service permission for long jobs shown as a notification. The background
-         checks and widget refreshes are short jobs that never run as a foreground service, so it's removed (with
+         checks are short jobs that never run as a foreground service, so it's removed (with
          WorkManager's foreground service below). -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
 
@@ -83,41 +83,6 @@
             <intent-filter>
                 <action android:name="org.unifiedpush.android.connector.RAISE_TO_FOREGROUND" />
             </intent-filter>
-        </service>
-
-        <!-- Home-screen widget (Glance): WAN status, throughput and online clients. Not exported: only the system's
-             widget service sends it updates (it reaches non-exported receivers), so other apps can't trigger refreshes. -->
-        <receiver
-            android:name=".ui.widgets.RouterWidgetReceiver"
-            android:exported="false"
-            android:label="@string/widget_label">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-                <!-- The rest of what Android's widget host sends, so strict intent matching lets it through. -->
-                <action android:name="android.appwidget.action.APPWIDGET_ENABLED" />
-                <action android:name="android.appwidget.action.APPWIDGET_DISABLED" />
-                <action android:name="android.appwidget.action.APPWIDGET_DELETED" />
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE_OPTIONS" />
-                <action android:name="android.appwidget.action.APPWIDGET_RESTORED" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_router_info" />
-        </receiver>
-
-        <!-- Quick Settings tile: guest Wi-Fi on or off. -->
-        <service
-            android:name=".ui.widgets.GuestWifiTileService"
-            android:exported="true"
-            android:icon="@drawable/ic_notification"
-            android:label="@string/tile_guest_label"
-            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
-            <intent-filter>
-                <action android:name="android.service.quicksettings.action.QS_TILE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.service.quicksettings.ACTIVE_TILE"
-                android:value="false" />
         </service>
 
         <!-- WorkManager's foreground service, for long jobs shown as a notification. WrtCtrl never uses it. -->

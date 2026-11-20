@@ -12,8 +12,6 @@ import com.vknxworks.wrtctrl.data.router.ClientNotes
 import com.vknxworks.wrtctrl.data.notify.CheckStore
 import com.vknxworks.wrtctrl.data.notify.Notifier
 import com.vknxworks.wrtctrl.data.notify.NotifySettingsRepository
-import com.vknxworks.wrtctrl.data.widgets.WidgetData
-import com.vknxworks.wrtctrl.data.widgets.WidgetStore
 import com.vknxworks.wrtctrl.data.settings.SettingsRepository
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -21,13 +19,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import androidx.work.WorkManager
 import okhttp3.OkHttpClient
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 /** Manual dependency container; one per process. */
 class AppContainer(val context: Context) {
     /**
-     * Work that outlives a screen (saving settings, refreshes, widgets). A failure in one of these
+     * Work that outlives a screen (saving settings, refreshes). A failure in one of these
      * (a router that went away, storage that can't be read right now) must never take the app down, also
      * not while it's closing: the next refresh tries again.
      */
@@ -65,7 +65,7 @@ class AppContainer(val context: Context) {
     /** Router logins are sealed with the app PIN: the lock is on and background checks are off. */
     fun sealing(): Boolean = vault.enabled && !lockPrefs.backgroundChecks
 
-    /** Background work (notifications, widgets, tile) can't read the logins right now. */
+    /** Background work (notifications) can't read the logins right now. */
     fun backgroundBlocked(): Boolean = sealing() && !vault.isOpen
 
     val routerStore = RouterStore(context, vault, ::sealing)
@@ -82,11 +82,9 @@ class AppContainer(val context: Context) {
         CheckStore.forget(context, id)
         ClientNotes.forget(context, id)
         Notifier.cancelRouter(context, id)
-        if (WidgetStore.read(context)?.routerId == id) WidgetStore.clear(context)
-        appScope.launch { runCatching { WidgetData.redraw(context) } }
     }
 
-    /** Turns the app lock on with [pin]. [backgroundChecks]: keep notifications and widgets working while locked. */
+    /** Turns the app lock on with [pin]. [backgroundChecks]: keep notifications working while locked. */
     suspend fun enableLock(pin: String, backgroundChecks: Boolean) {
         // Unlocked first, so the lock screen doesn't flash up while the PIN is being saved.
         AppLock.markUnlocked()
@@ -121,9 +119,7 @@ class AppContainer(val context: Context) {
             routerStore.routers.value.forEach { CheckStore.forget(context, it.id); ClientNotes.forget(context, it.id) }
             routerStore.removeAll()
         }
-        WidgetStore.clear(context)
         runCatching { Notifier.cancelAll(context) }
-        runCatching { WidgetData.redraw(context) }
         AppLock.markUnlocked()
         settings.update { it.copy(lockOnOpen = false, lockChanges = false) }
         vault.disable()
@@ -134,10 +130,22 @@ class AppContainer(val context: Context) {
     /** Locked: wipe the key from memory and drop the client that holds the login. */
     fun onLocked() {
         vault.close()
-        if (sealing()) {
-            sessions.setLocked(true)
-            // The widget and the tile now only say that WrtCtrl is locked.
-            appScope.launch { runCatching { WidgetData.redraw(context) } }
+        if (sealing()) sessions.setLocked(true)
+    }
+
+    /**
+     * The home-screen widget and the Quick Settings tile were removed. An install that had the widget placed
+     * still has its 30-minute refresh job and its saved snapshot: stop the job and delete the file. Runs off
+     * the main thread and is harmless when there is nothing to clean up.
+     */
+    fun cleanUpRemovedWidget() {
+        appScope.launch(Dispatchers.IO) {
+            runCatching {
+                val wm = WorkManager.getInstance(context)
+                wm.cancelUniqueWork("wrtctrl-widget")
+                wm.cancelUniqueWork("wrtctrl-widget-now")
+            }
+            runCatching { File(context.noBackupFilesDir, "widget.json").delete() }
         }
     }
 

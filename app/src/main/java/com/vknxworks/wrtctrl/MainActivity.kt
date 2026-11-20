@@ -26,10 +26,7 @@ import com.vknxworks.wrtctrl.ui.theme.signalBarStyle
 import com.vknxworks.wrtctrl.ui.components.WindowPrivacy
 import com.vknxworks.wrtctrl.ui.components.LocalAppCovered
 import com.vknxworks.wrtctrl.ui.components.ApplyDialog
-import com.vknxworks.wrtctrl.ui.widgets.Shortcuts
-import com.vknxworks.wrtctrl.data.widgets.WidgetData
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
+import com.vknxworks.wrtctrl.ui.nav.Shortcuts
 
 /** A FragmentActivity (not just a ComponentActivity) because the fingerprint prompt needs one. */
 class MainActivity : FragmentActivity() {
@@ -39,17 +36,12 @@ class MainActivity : FragmentActivity() {
         // Secure from the first frame (the lock is still being checked); lifted below once it's known.
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
         isSystemDark().let { dark -> enableEdgeToEdge(statusBarStyle = signalBarStyle(dark), navigationBarStyle = signalBarStyle(dark)) }
-        // An app shortcut, the widget or the tile; not again when the activity is recreated (rotation).
+        // An app shortcut; not again when the activity is recreated (rotation).
         if (savedInstanceState == null) runCatching { Shortcuts.handle(intent) }
         val c = container
         AppLock.attach(this, c)
-        // Widgets and the tile show fresh data after the app was opened, and their refresh keeps running.
-        lifecycleScope.launch {
-            runCatching {
-                WidgetData.schedule(applicationContext)
-                if (WidgetData.anyWidgets(applicationContext)) WidgetData.refreshSoon(applicationContext)
-            }
-        }
+        // Not again when the activity is recreated (rotation).
+        if (savedInstanceState == null) c.cleanUpRemovedWidget()
         setContent {
             val settings by c.settings.settings.collectAsStateWithLifecycle()
             val lock by AppLock.state.collectAsStateWithLifecycle()
