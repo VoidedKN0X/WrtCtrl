@@ -17,6 +17,15 @@ Built and checked by CI only: nothing here has been run on a phone or against a 
   - **Every other case signs in exactly as before**, and so does **Retry** on the Overview. A kept session is always checked right away by the request that reads the router's model and version: if the router no longer knows the session, that request signs in again automatically, and what the login may do is taken from that sign-in.
   - What you might notice: if the router's password was changed, or the login's permissions were edited on the router without restarting rpcd, WrtCtrl can keep working with the old session until that session ends (or until you tap Retry on the Overview's error card or restart the app after a few minutes), instead of noticing at the next start.
 
+### Security
+
+- **The signing key is no longer available to the build.** Until now the release key and its passwords were present in the same GitHub Actions job that runs Gradle, so any build plugin or library could in principle have read them. The build job now has no secrets at all and produces an unsigned APK. A separate job, which checks out no code and runs no Gradle, signs it with `apksigner`, and then refuses to hand it on unless it is signed by exactly the certificate published in SECURITY.md and README.md and its contents are identical to what the build job made. The key and the signature scheme (v2) are the same as before, so updates install as usual. Nothing in the app changed.
+- **The build checks that the published fingerprint and the enforced one are the same.** If `build.yml`, SECURITY.md and README.md ever disagree about the signing certificate, the build fails.
+
+### Project
+
+- **Builds no longer use a saved Gradle cache.** Ctrl apps had builds fail with "Dependency verification failed ... from repository Gradle Central Plugin Repository", and keep failing until the caches were deleted by hand. The cause was reproduced on DateCtrl: with a restored cache Gradle still fetches the plugin files from Maven Central on every build; when Maven Central can't be reached for a moment, Gradle takes the Kotlin plugin "marker" file from the Gradle plugin portal instead, the portal serves a different file under the same name, verification rightly refuses it, and the failed run then saved that state as the cache for every later run. Now every build and the weekly code scan start from a clean Gradle home (builds take a minute or two longer), and the plugin portal is no longer a plugin source at all (`settings.gradle.kts`): everything the build needs is on Maven Central and Google's Maven. Dependency verification itself is unchanged and as strict as before.
+
 ## v1.3.0 (2026-11-20)
 
 **This release encrypts some of what the app stores on the phone. An older version cannot read it afterwards, so export or back up anything you need before you update (details below).** Built and checked by CI only: nothing in this release had been run on a phone when it was published.
