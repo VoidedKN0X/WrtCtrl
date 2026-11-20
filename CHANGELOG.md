@@ -4,6 +4,19 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+Built and checked by CI only: nothing here has been run on a phone or against a router yet.
+
+### Changed
+
+- **The system log downloads far less while it's open.** The log screen used to download the last 1,000 lines again every 5 seconds. It now downloads all 1,000 once and after that only the last 100 lines per refresh, and joins the new ones onto what it already shows. OpenWrt's log service numbers every line, and the join is only made when the newly read lines connect to the shown ones without any doubt: same line numbers, and the lines both lists share must be identical (number, time, priority and text). If they don't connect (100 or more new lines within one refresh, a router or log service restart, a cleared log, or a router that sends no line numbers), WrtCtrl reads all 1,000 lines again, as before. What you see is the same list in the same order, still the newest 1,000 lines at most. One small difference: on a router whose log memory holds fewer than 1,000 lines, lines the router has already dropped can stay on screen (up to 1,000 in total) until you leave the log and open it again. When nothing new was logged, the screen is no longer redrawn.
+- **WrtCtrl signs in to the router less often.** Until now WrtCtrl signed in with the saved password every time it made a connection to the active router: at every start, every unlock of the app lock, every switch between routers and every change to a router's settings. Each of those left one more session on the router to time out, and sent the password once more (readable on the network when the router is reached over plain HTTP). It now keeps using the saved session when that is safe:
+  - **While the app stays in memory**, WrtCtrl remembers what the current session may do (the router fixes that at sign-in), so after an unlock, a switch back to a router or a settings change it carries on with that session without asking the router anything extra. Only a short fingerprint of the session ID is kept for this, not the ID itself, so nothing new is in memory while the app is locked.
+  - **After a restart of the app**, the saved session is tried only when it was issued less than its timeout ago (5 minutes by default), which is the time the router is sure to still know it. WrtCtrl then asks the router what that session may do (`session access`). That works for root and for logins whose permissions include `session access`; the restricted login from the README doesn't include it, gets "access denied" and signs in as before (one small extra request).
+  - **Every other case signs in exactly as before**, and so does **Retry** on the Overview. A kept session is always checked right away by the request that reads the router's model and version: if the router no longer knows the session, that request signs in again automatically, and what the login may do is taken from that sign-in.
+  - What you might notice: if the router's password was changed, or the login's permissions were edited on the router without restarting rpcd, WrtCtrl can keep working with the old session until that session ends (or until you tap Retry on the Overview's error card or restart the app after a few minutes), instead of noticing at the next start.
+
 ## v1.3.0 (2026-11-20)
 
 **This release encrypts some of what the app stores on the phone. An older version cannot read it afterwards, so export or back up anything you need before you update (details below).** Built and checked by CI only: nothing in this release had been run on a phone when it was published.
