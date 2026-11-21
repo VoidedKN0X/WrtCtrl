@@ -26,3 +26,10 @@ import kotlinx.serialization.Serializable
 @Serializable data object ServicesRoute
 @Serializable data object PackagesRoute
 @Serializable data object LogsRoute
+@Serializable data object FirewallRoute
+@Serializable data object HostnamesRoute
+@Serializable data object DiagnosticsRoute
+@Serializable data object TailscaleRoute
+@Serializable data object WireGuardRoute
+@Serializable data object DdnsRoute
+@Serializable data object MultiWanRoute

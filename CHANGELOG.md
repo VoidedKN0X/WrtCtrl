@@ -4,6 +4,30 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+Built and checked by CI only: none of this had been run on a phone or against a router when it was written. The ubus calls and commands were checked against OpenWrt 25.12's packages and LuCI's own code, but please try each new screen once on your router.
+
+**Copy the permission file from the README to the router again** (`/usr/share/rpcd/acl.d/wrtctrl.json`, then `/etc/init.d/rpcd restart`). The new screens need new permissions, also when you sign in as root: rpcd only lets a login run commands that a permission file names.
+
+### New
+
+- **Tailscale** (Network tab, shown when Tailscale is installed on the router): whether it's connected, the router's Tailscale name and addresses, the tailnet, anything Tailscale itself reports as wrong, and every device of your tailnet with online or offline. **Exit node**: pick a device that offers to be an exit node and the router sends its internet traffic through it, or pick "No exit node" to go back. WrtCtrl asks before switching and keeps the local network reachable (`--exit-node-allow-lan-access`), so you can always switch back from home. This isn't rolled back automatically.
+- **WireGuard** (Network tab, shown when an interface uses WireGuard): every WireGuard interface with its port, and every peer with its allowed addresses, last handshake, endpoint and traffic. Each peer has an on/off switch, applied with rollback: if your phone was connected through that peer and loses the router, the router puts the old setting back.
+- **Open in AdCtrl** in a new DNS section on the Network tab. It only shows when AdGuard Home is found on the router (its service or its program) and AdCtrl is installed on the phone.
+- **Firmware check** (System tab): shows the installed OpenWrt version and, when you tap "Check for a newer release", whether a newer release exists (newer point releases of your branch, and the newest release of a newer branch). The router asks OpenWrt's upgrade server for the list; your phone still only talks to the router. WrtCtrl never installs firmware. Snapshots and custom builds are recognised and not compared.
+- **Firewall** (Network tab): the default policies, every zone with its policies, networks, masquerading and the zones it forwards to, and every traffic rule with a one-line summary and an on/off switch (applied with rollback). Adding and editing rules stays in LuCI.
+- **Local hostnames** (Network tab): the DNS entries the router answers itself (`domain` entries in `/etc/config/dhcp`). Add, edit and remove them; names and IPv4 or IPv6 addresses are checked before saving.
+- **DHCP options** (Network › DHCP): each address pool now lists its DHCP options with a plain name for the common ones (gateway, DNS servers, domain, time servers), and you can add or remove one. Useful for handing out a different DNS server, for example AdGuard Home's address with `6,<address>`.
+- **Dynamic DNS status** (Network tab, shown when ddns-scripts is installed): per service whether it's running, the hostname, the provider, the address registered now, and the last and next update. Status only.
+- **Ping and traceroute** (Network tab): run from the router, over IPv4 or IPv6, with the same commands LuCI's Diagnostics page uses. The output can be selected and copied. What you type is checked so it can only ever be a hostname or an address.
+- **Multi-WAN status** (Network tab, shown when mwan3 is installed): every connection mwan3 tracks with online or offline and for how long, its test addresses with latency and loss, and how each policy shares new connections.
+
+### Changed
+
+- The "Open in AdCtrl" row on a device's page works as before; its code is now shared with the new DNS section.
+- README: the permission file has the new entries, and the Optional packages table says what Tailscale, WireGuard, dynamic DNS, mwan3 and AdGuard Home add.
+
 ## v1.4.0 (2026-11-21)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published. It is the first release built with the new build tools (Android Gradle Plugin 9, stricter code shrinking), so update over your installed version and check that your data and settings are still there.

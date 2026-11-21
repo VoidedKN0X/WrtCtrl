@@ -12,9 +12,10 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 
 - **Overview**: model, OpenWrt version, kernel, uptime, load, CPU, memory, temperature and storage; WAN status, public IP (read from the router itself), gateway, DNS and IPv6; a live WAN throughput graph; Wi-Fi radios; and an attention list for WAN down, a radio off, low memory, storage almost full, package updates and unapplied changes
 - **Clients**: every device on your network, from DHCP leases, host hints, the neighbour table and Wi-Fi, with vendor (from a list built into the app, no online lookup), connection type, signal and lease expiry; sort and filter by name, IP, online, band and signal. Each device's page has its signal and rate history, a **bandwidth graph** (data use per day or month with nlbwmon, or a live rate from the connection table without it), and actions: make its lease static, disconnect it from Wi-Fi, **block it from the internet** (Reject or Drop, all the time or on a schedule with start and stop times and weekdays, with undo, and a second confirmation before blocking the phone you're using), wake it (Wake-on-LAN with etherwake), your own nickname and notes, and **Open in AdCtrl** when AdCtrl is installed. **Blocked devices** lists every device WrtCtrl blocks, with Unblock; WrtCtrl only ever touches its own firewall rules (named `WrtCtrl block …`), never the router's other rules
-- **Network**: Wi-Fi networks and a **guest network** switch, DHCP leases and static leases, **port forwards**, and interfaces with their traffic counters
-- **System**: services, package updates (with `apk` or `opkg`, whichever your router has), the system log, reboot and config backups
-- **Changes that could cut you off are undone automatically**: Wi-Fi, DHCP and firewall changes (including port forwards and blocking a device) are applied with OpenWrt's rollback. If WrtCtrl can't reach the router afterwards, the router puts the old settings back by itself. Restarting an interface, rebooting and package upgrades can't be rolled back, so WrtCtrl asks first (for the LAN, the WAN and a reboot you type the name to confirm)
+- **Network**: Wi-Fi networks and a **guest network** switch, DHCP leases and static leases, **DHCP options** per address pool (for example the DNS server devices are told to use), **port forwards**, interfaces with their traffic counters, the **firewall** (default policies, zones and what they forward to, and traffic rules with an on/off switch each), **local hostnames** (the DNS entries the router answers itself: add, edit, remove), and **ping and traceroute** run from the router
+- **What your router has, when it has it**: **Tailscale** (state, the devices of your tailnet, and a switch for the **exit node** the router uses), **WireGuard** (interfaces and peers with their last handshake and traffic, and an on/off switch per peer), **dynamic DNS** status (registered address, last and next update), **multi-WAN** status with mwan3 (which connections are up, their test addresses and how each policy shares the traffic), and **Open in AdCtrl** in a DNS section when AdGuard Home is installed on the router and AdCtrl on the phone. Rows only appear for what WrtCtrl finds on the router
+- **System**: services, package updates (with `apk` or `opkg`, whichever your router has), a **firmware check** (is there a newer OpenWrt release; WrtCtrl never installs firmware), the system log, reboot and config backups
+- **Changes that could cut you off are undone automatically**: Wi-Fi, DHCP and firewall changes (including port forwards, firewall rules, local hostnames, DHCP options, WireGuard peers and blocking a device) are applied with OpenWrt's rollback. If WrtCtrl can't reach the router afterwards, the router puts the old settings back by itself. Restarting an interface, rebooting, package upgrades and choosing a Tailscale exit node can't be rolled back, so WrtCtrl asks first (for the LAN, the WAN and a reboot you type the name to confirm)
 - **Notifications**: router unreachable, WAN down or back up, a new device, and a daily package-update digest, from WrtCtrl's own background checks, woken at once by your **self-hosted ntfy** (push from the router's hotplug scripts)
 - **App shortcuts** (Clients, Guest Wi-Fi, Reboot)
 - **Several routers**, such as a main router and a dumb access point
@@ -121,6 +122,15 @@ Copy this to the router as `/usr/share/rpcd/acl.d/wrtctrl.json`. It holds two pr
         "log": [
           "read"
         ],
+        "luci.wireguard": [
+          "getWgInstances"
+        ],
+        "luci.ddns": [
+          "get_services_status"
+        ],
+        "mwan3": [
+          "status"
+        ],
         "uci": [
           "get",
           "changes"
@@ -136,7 +146,8 @@ Copy this to the router as `/usr/share/rpcd/acl.d/wrtctrl.json`. It holds two pr
         "network",
         "wireless",
         "dhcp",
-        "firewall"
+        "firewall",
+        "ddns"
       ],
       "file": {
         "/proc/stat": [
@@ -180,12 +191,48 @@ Copy this to the router as `/usr/share/rpcd/acl.d/wrtctrl.json`. It holds two pr
         ],
         "/usr/sbin/nlbw -c json -g mac -t *": [
           "exec"
+        ],
+        "/usr/bin/AdGuardHome": [
+          "list"
+        ],
+        "/opt/AdGuardHome/AdGuardHome": [
+          "list"
+        ],
+        "/usr/sbin/tailscale status --json": [
+          "exec"
+        ],
+        "/bin/uclient-fetch -q -T 15 -O - https://sysupgrade.openwrt.org/api/v1/overview": [
+          "exec"
+        ],
+        "/bin/ping -4 -c 5 -W 1 *": [
+          "exec"
+        ],
+        "/usr/bin/ping -4 -c 5 -W 1 *": [
+          "exec"
+        ],
+        "/bin/ping6 -6 -c 5 *": [
+          "exec"
+        ],
+        "/usr/bin/ping6 -6 -c 5 *": [
+          "exec"
+        ],
+        "/usr/bin/traceroute -4 -q 1 -w 1 -n -m 20 *": [
+          "exec"
+        ],
+        "/bin/traceroute -4 -q 1 -w 1 -n -m 20 *": [
+          "exec"
+        ],
+        "/usr/bin/traceroute6 -q 1 -w 1 -n -m 20 *": [
+          "exec"
+        ],
+        "/bin/traceroute6 -q 1 -w 1 -n -m 20 *": [
+          "exec"
         ]
       }
     }
   },
   "wrtctrl-operator": {
-    "description": "WrtCtrl: Wi-Fi, DHCP, port forwards, blocking, interfaces, services, packages, backup and reboot",
+    "description": "WrtCtrl: Wi-Fi, DHCP, port forwards, firewall rules, hostnames, blocking, interfaces, WireGuard peers, Tailscale exit node, services, packages, backup and reboot",
     "read": {
       "cgi-io": [
         "backup"
@@ -224,9 +271,13 @@ Copy this to the router as `/usr/share/rpcd/acl.d/wrtctrl.json`. It holds two pr
       "uci": [
         "wireless",
         "dhcp",
-        "firewall"
+        "firewall",
+        "network"
       ],
       "file": {
+        "/usr/sbin/tailscale set --exit-node=*": [
+          "exec"
+        ],
         "/usr/libexec/package-manager-call update": [
           "exec"
         ],
@@ -245,9 +296,9 @@ Copy this to the router as `/usr/share/rpcd/acl.d/wrtctrl.json`. It holds two pr
 }
 ```
 
-`package-manager-call` is LuCI's wrapper around `apk` (or `opkg` on older OpenWrt), so the same permissions work with either. The `ip neigh` commands give the neighbour table (who's online), `/proc/stat` the CPU use, and the `list` entries let WrtCtrl see which optional packages are installed. Without Wi-Fi on the router, the Wi-Fi entries simply do nothing.
+`package-manager-call` is LuCI's wrapper around `apk` (or `opkg` on older OpenWrt), so the same permissions work with either. The `ip neigh` commands give the neighbour table (who's online), `/proc/stat` the CPU use, and the `list` entries let WrtCtrl see which optional packages are installed. Without Wi-Fi on the router, the Wi-Fi entries simply do nothing, and the same goes for Tailscale, WireGuard (`luci.wireguard`, from `luci-proto-wireguard`), dynamic DNS (`luci.ddns`, from `luci-app-ddns`) and mwan3 when they aren't installed. `tailscale status --json` reads Tailscale's state and `tailscale set --exit-node=…` is the only Tailscale setting WrtCtrl changes. The `uclient-fetch` line is the firmware check: the router downloads the list of releases from OpenWrt's upgrade server, and only that exact address is allowed. The ping and traceroute lines are the commands LuCI's Diagnostics page runs. Write access to `network` is only used to switch WireGuard peers on and off; leave it out (and WireGuard becomes view-only) if you'd rather not allow it.
 
-**Updating from an earlier WrtCtrl version?** Copy this file again: 1.0 needs more permissions than 0.2 (Wi-Fi, the neighbour table, packages, blocking and backups), and 1.1 adds nlbwmon's history (`nlbw -c list` and `-t`) and LuCI's connection list (`getConntrackList`) for the bandwidth graphs. Then run `/etc/init.d/rpcd restart`.
+**Updating from an earlier WrtCtrl version?** Copy this file again: 1.0 needs more permissions than 0.2 (Wi-Fi, the neighbour table, packages, blocking and backups), 1.1 adds nlbwmon's history (`nlbw -c list` and `-t`) and LuCI's connection list (`getConntrackList`) for the bandwidth graphs, and 1.5 adds Tailscale, WireGuard, dynamic DNS, mwan3, the firmware check, ping and traceroute, and finding AdGuard Home. **This goes for root too:** rpcd only lets a login run the commands a permission file names, so without this file root can't run `tailscale`, the firmware check or (unless LuCI's own Diagnostics page is installed) ping and traceroute, and WrtCtrl shows those as not allowed. Then run `/etc/init.d/rpcd restart`.
 
 ### 2. Add the login
 
@@ -284,6 +335,13 @@ WrtCtrl checks which of these are installed and only shows what they make possib
 | `nlbwmon` | Data use per device on each client's page, as a bar per accounting period: monthly by default, daily with `option database_interval '2026-01-01/1'` in `/etc/config/nlbwmon`. Without it, the page shows a live rate from the connection tracking table (with `getConntrackList` in the permission file) |
 | `etherwake` | **Wake-on-LAN** for wired devices |
 | `luci-app-statistics` (`collectd`) | Detected and installable from WrtCtrl; history graphs from it are planned (WrtCtrl shows live graphs without it) |
+| `tailscale` | **Tailscale** on the Network tab: state, devices and the exit node switch. Needs the permission file above, also for root |
+| `luci-proto-wireguard` | **WireGuard** on the Network tab, when an interface uses WireGuard: peers with their last handshake and traffic, and a switch per peer |
+| `ddns-scripts` with `luci-app-ddns` | **Dynamic DNS** status on the Network tab |
+| `mwan3` | **Multi-WAN** status on the Network tab |
+| `adguardhome` (or AdGuard Home installed with its own installer) | **Open in AdCtrl** in a DNS section on the Network tab, when [AdCtrl](https://github.com/VoidedKN0X/AdCtrl) is installed on the phone |
+
+WrtCtrl doesn't install these five for you; it only shows their rows once they're there.
 
 ## Notifications
 
@@ -346,7 +404,7 @@ Turn it on: tap your profile picture › **Settings › Privacy and security ›
 Everything WrtCtrl connects to:
 
 - **Your OpenWrt routers**, at exactly the address you entered for each one. Redirects are never followed, plain HTTP only goes to a router you allowed it for, and a self-signed certificate is only accepted when it's the exact one you confirmed for that router.
-- **Nothing else.** With push turned on, the ntfy app on your phone delivers wake-up calls to WrtCtrl; WrtCtrl itself never connects to your ntfy server.
+- **Nothing else.** The firmware check (System › Firmware) is run by the router: when you tap it, the router asks `sysupgrade.openwrt.org` for the list of OpenWrt releases, and your phone only talks to the router. With push turned on, the ntfy app on your phone delivers wake-up calls to WrtCtrl; WrtCtrl itself never connects to your ntfy server.
 
 Links that open in your browser only when you tap them (the app itself doesn't contact these sites):
 

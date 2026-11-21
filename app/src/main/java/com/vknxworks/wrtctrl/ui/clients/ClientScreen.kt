@@ -1,7 +1,6 @@
 package com.vknxworks.wrtctrl.ui.clients
 
 import android.content.Context
-import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -59,7 +58,6 @@ import com.vknxworks.wrtctrl.data.api.deauth
 import com.vknxworks.wrtctrl.data.api.installedOptional
 import com.vknxworks.wrtctrl.data.api.usageByMac
 import com.vknxworks.wrtctrl.data.api.wake
-import com.vknxworks.wrtctrl.data.lock.AppLock
 import com.vknxworks.wrtctrl.data.router.ClientNote
 import com.vknxworks.wrtctrl.data.router.ClientNotes
 import com.vknxworks.wrtctrl.data.router.Link
@@ -70,7 +68,10 @@ import com.vknxworks.wrtctrl.data.router.stageRemoveStaticLease
 import com.vknxworks.wrtctrl.data.router.stageStaticLease
 import com.vknxworks.wrtctrl.data.router.stageUnblock
 import com.vknxworks.wrtctrl.ui.components.ChartSeries
+import com.vknxworks.wrtctrl.ui.components.ADCTRL
 import com.vknxworks.wrtctrl.ui.components.ConfirmDialog
+import com.vknxworks.wrtctrl.ui.components.isInstalled
+import com.vknxworks.wrtctrl.ui.components.openAdCtrl
 import com.vknxworks.wrtctrl.ui.components.CtrlCard
 import com.vknxworks.wrtctrl.ui.components.CtrlDialog
 import com.vknxworks.wrtctrl.ui.components.CtrlSectionLabel
@@ -94,8 +95,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** AdCtrl's package: "Open in AdCtrl" shows when it's installed. */
-private const val ADCTRL = "com.vknxworks.adctrl"
 
 private data class SignalPoint(val time: Long, val signal: Double, val rate: Double)
 
@@ -226,12 +225,7 @@ fun ClientScreen(mac: String) {
                 }
                 GroupRow(stringResource(R.string.client_notes), cl.note.ifBlank { null } ?: stringResource(R.string.client_notes_sub), icon = Icons.Outlined.Edit, showChevron = true, onClick = { notesDialog = true })
                 if (isInstalled(context, ADCTRL)) {
-                    GroupRow(stringResource(R.string.client_open_adctrl), stringResource(R.string.client_open_adctrl_sub), icon = Icons.Outlined.Shield, trailing = { androidx.compose.material3.Icon(Icons.Outlined.OpenInNew, null, tint = CtrlColors.Muted) }, onClick = {
-                        context.packageManager.getLaunchIntentForPackage(ADCTRL)?.let { intent ->
-                            AppLock.expectReturn()
-                            runCatching { context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-                        }
-                    })
+                    GroupRow(stringResource(R.string.client_open_adctrl), stringResource(R.string.client_open_adctrl_sub), icon = Icons.Outlined.Shield, trailing = { androidx.compose.material3.Icon(Icons.Outlined.OpenInNew, null, tint = CtrlColors.Muted) }, onClick = { openAdCtrl(context) })
                 }
             }
             if (readOnly) {
@@ -370,9 +364,6 @@ fun ClientScreen(mac: String) {
         }
     }
 }
-
-private fun isInstalled(context: Context, pkg: String): Boolean =
-    runCatching { context.packageManager.getLaunchIntentForPackage(pkg) != null }.getOrDefault(false)
 
 @Composable
 private fun ClientInfo(cl: NetClient, thisPhone: Boolean) {

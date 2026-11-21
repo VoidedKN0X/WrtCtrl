@@ -15,6 +15,8 @@ import androidx.compose.material.icons.outlined.Extension
 import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.ListAlt
 import androidx.compose.material.icons.outlined.PowerSettingsNew
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.SystemUpdate
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -31,7 +33,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vknxworks.wrtctrl.R
 import com.vknxworks.wrtctrl.container
+import com.vknxworks.wrtctrl.data.api.FIRMWARE_CHECK_ARGS
+import com.vknxworks.wrtctrl.data.api.FirmwareCheck
+import com.vknxworks.wrtctrl.data.api.FirmwareCheckFailed
 import com.vknxworks.wrtctrl.data.api.OptionalPackage
+import com.vknxworks.wrtctrl.data.api.UCLIENT_FETCH
+import com.vknxworks.wrtctrl.data.api.firmwareCheck
 import com.vknxworks.wrtctrl.data.api.downloadBackup
 import com.vknxworks.wrtctrl.data.api.installPackage
 import com.vknxworks.wrtctrl.data.api.installedOptional
@@ -67,7 +74,7 @@ private fun OptionalPackage.unlocks(): Int = when (this) {
     OptionalPackage.COLLECTD -> R.string.opt_collectd
 }
 
-/** The System tab: services, packages, the system log, a config backup, optional packages and reboot. */
+/** The System tab: services, packages, the system log, the firmware check, a config backup, optional packages and reboot. */
 @Composable
 fun SystemScreen() {
     val context = LocalContext.current
@@ -81,6 +88,9 @@ fun SystemScreen() {
     val writable = router?.readOnly == false
     var confirmReboot by remember { mutableStateOf(false) }
     var installing by remember { mutableStateOf<OptionalPackage?>(null) }
+    var fwChecking by remember(router?.id) { mutableStateOf(false) }
+    var fwResult by remember(router?.id) { mutableStateOf<FirmwareCheck?>(null) }
+    var fwError by remember(router?.id) { mutableStateOf<String?>(null) }
     val optional = rememberRouterData { client -> runCatching { client.installedOptional() }.getOrDefault(emptySet()) }
     val hostname = access.board?.hostname?.ifBlank { null } ?: router?.hostname?.ifBlank { null } ?: router?.name.orEmpty()
 
@@ -110,6 +120,52 @@ fun SystemScreen() {
                     GroupRow(stringResource(R.string.sys_services), stringResource(R.string.sys_services_sub), icon = Icons.Outlined.Settings, showChevron = true, onClick = { nav.navigate(ServicesRoute) })
                     GroupRow(stringResource(R.string.sys_packages), stringResource(R.string.sys_packages_sub), icon = Icons.Outlined.Inventory2, showChevron = true, onClick = { nav.navigate(PackagesRoute) })
                     GroupRow(stringResource(R.string.sys_logs), stringResource(R.string.sys_logs_sub), icon = Icons.Outlined.ListAlt, showChevron = true, onClick = { nav.navigate(LogsRoute) })
+                }
+            }
+            item("firmware") {
+                val version = access.board?.release?.version.orEmpty().ifBlank { router?.openWrtVersion.orEmpty() }
+                val canCheck = acl.canExec(UCLIENT_FETCH + " " + FIRMWARE_CHECK_ARGS.joinToString(" "))
+                val result = fwResult
+                Group(stringResource(R.string.sys_firmware), footer = stringResource(R.string.sys_firmware_footer)) {
+                    GroupRow(stringResource(R.string.sys_firmware_installed), version.ifBlank { stringResource(R.string.unknown) }, icon = Icons.Outlined.SystemUpdate)
+                    GroupRow(
+                        stringResource(R.string.sys_firmware_check),
+                        when {
+                            !canCheck -> stringResource(R.string.sys_firmware_not_allowed)
+                            fwChecking -> stringResource(R.string.sys_firmware_checking)
+                            fwError != null -> fwError
+                            result == null -> stringResource(R.string.sys_firmware_check_sub)
+                            result.notARelease -> stringResource(R.string.sys_firmware_not_release)
+                            result.newer.isEmpty() -> stringResource(R.string.sys_firmware_latest, result.current)
+                            else -> stringResource(R.string.sys_firmware_newer, result.newer.joinToString(", "))
+                        },
+                        icon = Icons.Outlined.Refresh,
+                        titleColor = when {
+                            !canCheck -> CtrlColors.Muted
+                            result != null && result.newer.isNotEmpty() && fwError == null && !fwChecking -> CtrlColors.AccentText
+                            else -> CtrlColors.Text
+                        },
+                        onClick = if (canCheck && !fwChecking && version.isNotBlank()) ({
+                            val client = active?.client
+                            if (client != null) {
+                                fwChecking = true
+                                fwError = null
+                                scope.launch {
+                                    try {
+                                        fwResult = client.firmwareCheck(version)
+                                    } catch (e: kotlinx.coroutines.CancellationException) {
+                                        throw e
+                                    } catch (e: FirmwareCheckFailed) {
+                                        fwError = context.getString(R.string.sys_firmware_failed)
+                                    } catch (e: Exception) {
+                                        fwError = errorMessage(context, e, router?.host.orEmpty())
+                                    } finally {
+                                        fwChecking = false
+                                    }
+                                }
+                            }
+                        }) else null,
+                    )
                 }
             }
             item("backup") {

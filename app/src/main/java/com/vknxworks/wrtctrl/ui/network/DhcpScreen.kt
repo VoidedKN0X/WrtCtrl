@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +36,10 @@ import com.vknxworks.wrtctrl.container
 import com.vknxworks.wrtctrl.data.api.DhcpLease
 import com.vknxworks.wrtctrl.data.api.UciSection
 import com.vknxworks.wrtctrl.data.api.dhcpLeases
+import com.vknxworks.wrtctrl.data.api.dhcpOptionCode
+import com.vknxworks.wrtctrl.data.api.isDhcpOption
+import com.vknxworks.wrtctrl.data.api.uciDelete
+import com.vknxworks.wrtctrl.data.api.uciSet
 import com.vknxworks.wrtctrl.data.api.normMac
 import com.vknxworks.wrtctrl.data.api.uciGet
 import com.vknxworks.wrtctrl.data.router.Oui
@@ -60,7 +65,7 @@ private data class DhcpData(val leases: List<DhcpLease>, val hosts: List<UciSect
 /** A static lease being added (null section) or edited. */
 private data class HostEdit(val section: UciSection?, val mac: String, val ip: String, val name: String)
 
-/** DHCP: active leases, static leases (add, edit, delete) and the address pools. */
+/** DHCP: active leases, static leases (add, edit, delete) and the address pools with their DHCP options (add, remove). */
 @Composable
 fun DhcpScreen() {
     val context = LocalContext.current
@@ -72,6 +77,8 @@ fun DhcpScreen() {
     val canEdit = router?.readOnly == false && access.acl.canApply && access.acl.canWriteUci("dhcp")
     var editing by remember { mutableStateOf<HostEdit?>(null) }
     var deleting by remember { mutableStateOf<UciSection?>(null) }
+    var addingOption by remember { mutableStateOf<UciSection?>(null) }
+    var removingOption by remember { mutableStateOf<Pair<UciSection, String>?>(null) }
 
     val data = rememberRouterData(15_000) { client ->
         DhcpData(
@@ -135,6 +142,17 @@ fun DhcpScreen() {
                     }
                     p.opt("dhcpv6").ifBlank { null }?.let { GroupRow(stringResource(R.string.dhcp_pool_v6), it) }
                     p.opt("ra").ifBlank { null }?.let { GroupRow(stringResource(R.string.dhcp_pool_ra), it) }
+                    // DHCP options handed to the devices of this pool (dnsmasq's dhcp-option, e.g. "6,<DNS server>").
+                    val options = p.list("dhcp_option")
+                    options.forEach { o ->
+                        GroupRow(
+                            dhcpOptionLabel(o),
+                            o,
+                            icon = Icons.Outlined.Tune,
+                            trailing = if (canEdit) ({ IconButton(onClick = { removingOption = p to o }) { Icon(Icons.Outlined.Delete, stringResource(R.string.remove), tint = CtrlColors.Error) } }) else null,
+                        )
+                    }
+                    if (canEdit) GroupRow(stringResource(R.string.dhcp_option_add), stringResource(R.string.dhcp_option_add_sub), icon = Icons.Outlined.Add, onClick = { addingOption = p })
                 }
             }
             Text(stringResource(R.string.dhcp_pool_note), style = MaterialTheme.typography.bodySmall, color = CtrlColors.Muted, modifier = Modifier.padding(horizontal = 24.dp))
@@ -152,6 +170,39 @@ fun DhcpScreen() {
             }
         }
     }
+    addingOption?.let { p ->
+        val pool = p.opt("interface").ifBlank { p.name }
+        OptionDialog(pool, onDismiss = { addingOption = null }) { option ->
+            addingOption = null
+            if (client == null) return@OptionDialog
+            scope.launch {
+                c.changes.apply(client, context.getString(R.string.change_dhcp_option_added, option, pool)) {
+                    uciSet("dhcp", p.name, mapOf("dhcp_option" to (p.list("dhcp_option") + option).distinct()))
+                }
+                data.refresh()
+            }
+        }
+    }
+    removingOption?.let { (p, option) ->
+        val pool = p.opt("interface").ifBlank { p.name }
+        ConfirmDialog(
+            title = stringResource(R.string.dhcp_option_remove),
+            body = stringResource(R.string.dhcp_option_remove_body, option, pool),
+            confirmLabel = stringResource(R.string.remove),
+            onDismiss = { removingOption = null },
+            onConfirm = {
+                removingOption = null
+                if (client == null) return@ConfirmDialog
+                scope.launch {
+                    c.changes.apply(client, context.getString(R.string.change_dhcp_option_removed, option, pool)) {
+                        val left = p.list("dhcp_option") - option
+                        if (left.isEmpty()) uciDelete("dhcp", p.name, listOf("dhcp_option")) else uciSet("dhcp", p.name, mapOf("dhcp_option" to left))
+                    }
+                    data.refresh()
+                }
+            },
+        )
+    }
     deleting?.let { h ->
         ConfirmDialog(
             title = stringResource(R.string.client_static_remove),
@@ -168,6 +219,36 @@ fun DhcpScreen() {
             },
         )
     }
+}
+
+/** What a DHCP option is for, for the well-known numbers; "DHCP option" for the rest. */
+@Composable
+private fun dhcpOptionLabel(option: String): String = stringResource(
+    when (dhcpOptionCode(option)) {
+        3 -> R.string.dhcp_option_router
+        6 -> R.string.dhcp_option_dns
+        15 -> R.string.dhcp_option_domain
+        42 -> R.string.dhcp_option_ntp
+        else -> R.string.dhcp_option_other
+    },
+)
+
+@Composable
+private fun OptionDialog(pool: String, onDismiss: () -> Unit, onSave: (String) -> Unit) {
+    var value by remember { mutableStateOf("") }
+    val ok = isDhcpOption(value.trim())
+    CtrlDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.Outlined.Tune, null) },
+        title = { Text(stringResource(R.string.dhcp_option_add_title, pool)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                CtrlTextField(value = value, onValueChange = { value = it.trim() }, label = { Text(stringResource(R.string.dhcp_option_field)) }, supportingText = { Text(stringResource(R.string.dhcp_option_hint)) }, isError = value.isNotEmpty() && !ok, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, autoCorrectEnabled = false), modifier = Modifier.fillMaxWidth())
+            }
+        },
+        confirmButton = { TextButton(onClick = { onSave(value.trim()) }, enabled = ok) { Text(stringResource(R.string.save_changes)) } },
+        dismissButton = { TextButton(onDismiss) { Text(stringResource(R.string.cancel)) } },
+    )
 }
 
 @Composable

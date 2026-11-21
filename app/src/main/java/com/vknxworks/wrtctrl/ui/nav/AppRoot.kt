@@ -237,6 +237,13 @@ private fun AppNavHost(navController: NavHostController) {
         composable<DhcpRoute> { DhcpScreen() }
         composable<PortForwardsRoute> { PortForwardsScreen() }
         composable<InterfacesRoute> { InterfacesScreen() }
+        composable<FirewallRoute> { com.vknxworks.wrtctrl.ui.network.FirewallScreen() }
+        composable<HostnamesRoute> { com.vknxworks.wrtctrl.ui.network.HostnamesScreen() }
+        composable<DiagnosticsRoute> { com.vknxworks.wrtctrl.ui.network.DiagnosticsScreen() }
+        composable<TailscaleRoute> { com.vknxworks.wrtctrl.ui.network.TailscaleScreen() }
+        composable<WireGuardRoute> { com.vknxworks.wrtctrl.ui.network.WireGuardScreen() }
+        composable<DdnsRoute> { com.vknxworks.wrtctrl.ui.network.DdnsScreen() }
+        composable<MultiWanRoute> { com.vknxworks.wrtctrl.ui.network.MultiWanScreen() }
         composable<ServicesRoute> { ServicesScreen() }
         composable<PackagesRoute> { PackagesScreen() }
         composable<LogsRoute> { LogsScreen() }
