@@ -4,7 +4,9 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
-## Unreleased
+## v1.5.0 (2026-11-21)
+
+Built and checked by CI only: nothing in this release had been run on a phone when it was published.
 
 Built and checked by CI only: none of this had been run on a phone or against a router when it was written. The ubus calls and commands were checked against OpenWrt 25.12's packages and LuCI's own code, but please try each new screen once on your router.
 
