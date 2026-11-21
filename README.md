@@ -19,6 +19,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Notifications**: router unreachable, WAN down or back up, a new device, and a daily package-update digest, from WrtCtrl's own background checks, woken at once by your **self-hosted ntfy** (push from the router's hotplug scripts)
 - **App shortcuts** (Clients, Guest Wi-Fi, Reboot)
 - **Several routers**, such as a main router and a dumb access point
+- **Export and import** of WrtCtrl's own settings and your list of routers (names, addresses, usernames) to a file, for a new phone. Passwords, the app lock, trusted certificates and device nicknames are never in the file; an import only adds routers you don't have yet, asks the usual question before adding an `http://` router, and never switches off the app lock or hiding
 - **App lock** with its own PIN and optional fingerprint unlock, a **read-only mode** per router, certificate pinning, and optional **Hide in screenshots** and **Hide in recent apps**
 
 ## Requirements

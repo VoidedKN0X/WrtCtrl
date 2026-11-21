@@ -790,4 +790,26 @@
     <string name="sys_firmware_failed">The router couldn’t get the release list. Check that it has internet access.</string>
     <string name="sys_firmware_not_allowed">This login isn’t allowed to run the check (see the README for the permissions).</string>
     <string name="sys_firmware_footer">The router itself asks sysupgrade.openwrt.org for the list of releases, only when you tap. Your phone still talks to nothing but the router. WrtCtrl never installs firmware: upgrade in LuCI or with owut.</string>
+
+    <!-- Settings export and import -->
+    <string name="sx_title">Export and import</string>
+    <string name="sx_footer">The file holds WrtCtrl’s settings and your routers’ names, addresses and usernames. Passwords, the app lock, trusted certificates and device nicknames and notes are never in it.</string>
+    <string name="sx_export">Export settings</string>
+    <string name="sx_export_sub">Save them to a file</string>
+    <string name="sx_import">Import settings</string>
+    <string name="sx_import_sub">Read them from a file</string>
+    <string name="sx_import_setup">Import settings from a file</string>
+    <string name="sx_exported">Settings exported</string>
+    <string name="sx_export_failed">Couldn’t write the file</string>
+    <string name="sx_imported">Settings imported</string>
+    <string name="sx_imported_routers">Settings imported. Routers added: %1$d. Enter each one’s password under Routers.</string>
+    <string name="sx_import_failed">Couldn’t import the settings</string>
+    <string name="sx_not_valid">This isn’t a WrtCtrl settings file</string>
+    <string name="sx_too_new">This file comes from a newer WrtCtrl. Update WrtCtrl first.</string>
+    <string name="sx_confirm_title">Import these settings?</string>
+    <string name="sx_confirm_settings">The app settings from this file (written on %1$s) replace the ones on this phone: theme, warning levels, and which notifications you get and how often.</string>
+    <string name="sx_confirm_add">Routers that will be added, without a password:\n%1$s</string>
+    <string name="sx_confirm_kept">Already on this phone, left as they are: %1$s</string>
+    <string name="sx_confirm_never">The app lock, saved passwords, trusted certificates and routers you already have don’t change. Background checks stay as they are.</string>
+    <string name="sx_http_body">These routers in the file have an http:// address:\n%1$s\n\nThen your router password, your session and everything WrtCtrl shows and changes are sent unencrypted. That’s fine on your home network or a VPN, but risky anywhere else. Cancel adds everything else and leaves these out.</string>
 </resources>

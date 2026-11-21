@@ -23,6 +23,8 @@ Built and checked by CI only: none of this had been run on a phone or against a 
 - **Ping and traceroute** (Network tab): run from the router, over IPv4 or IPv6, with the same commands LuCI's Diagnostics page uses. The output can be selected and copied. What you type is checked so it can only ever be a hostname or an address.
 - **Multi-WAN status** (Network tab, shown when mwan3 is installed): every connection mwan3 tracks with online or offline and for how long, its test addresses with latency and loss, and how each policy shares new connections.
 
+- **Export and import settings** (profile picture › Settings › Export and import, and "Import settings from a file" on the first-start screen): saves WrtCtrl's own settings (theme, warning levels, which notifications and how often) and your routers' names, addresses, usernames and read-only switch to a JSON file, and reads them back on another phone. Passwords, sessions, the app lock and its PIN, trusted certificates, the push address and device nicknames and notes are never written. Before anything changes, an import shows which routers it would add and which you already have; routers you already have are left exactly as they are, new ones come without a password (enter it under Routers) and without a trusted certificate, an `http://` router is only added after the usual "unencrypted connection" question, and hiding in screenshots or recent apps can only be switched on by a file, never off. Whether background checks run is not changed by an import.
+
 ### Changed
 
 - The "Open in AdCtrl" row on a device's page works as before; its code is now shared with the new DNS section.

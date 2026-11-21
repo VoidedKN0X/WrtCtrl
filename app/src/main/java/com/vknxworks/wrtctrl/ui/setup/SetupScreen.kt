@@ -293,6 +293,8 @@ fun SetupScreen(editId: String? = null, onDone: () -> Unit, onCancel: (() -> Uni
                         modifier = Modifier.fillMaxWidth(),
                     )
                     if (busy) CircularProgressIndicator(Modifier.padding(top = 8.dp).size(24.dp), strokeWidth = 2.dp)
+                    // First start only: bring the settings and the list of routers over from a file.
+                    if (onCancel == null && editId == null) com.vknxworks.wrtctrl.ui.settings.SettingsImportButton(Modifier.padding(top = 8.dp))
                 }
             } else {
                 ConnectedSummary(result, readOnly, onReadOnly = { readOnly = it })

@@ -153,6 +153,7 @@ fun SettingsScreen() {
                     icon = Icons.Outlined.Memory,
                 ) { pct -> c.appScope.launch { c.settings.update { it.copy(memWarnPercent = pct) } } }
             }
+            BackupGroup()
         }
     }
 }
