@@ -1,5 +1,8 @@
 package com.vknxworks.wrtctrl.ui.components
 
+import android.icu.text.MeasureFormat
+import android.icu.util.Measure
+import android.icu.util.MeasureUnit
 import android.text.format.DateUtils
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -17,19 +20,26 @@ fun formatBytes(bytes: Long): String {
     return if (value >= 100) "${value.roundToInt()} ${units[i]}" else String.format(Locale.getDefault(), "%.1f %s", value, units[i])
 }
 
-/** Compact uptime: 45s, 12m, 5h 3m, 14d 2h. */
+/**
+ * Compact uptime with the phone's own short units (ICU's narrow format): 45s, 12m, 5h 3m, 14d 2h in
+ * English, 14j 2h in French and so on.
+ */
 fun formatUptime(seconds: Long): String {
-    if (seconds <= 0) return "0s"
-    val d = seconds / 86_400
-    val h = (seconds % 86_400) / 3_600
-    val m = (seconds % 3_600) / 60
+    val s = seconds.coerceAtLeast(0)
+    val d = s / 86_400
+    val h = (s % 86_400) / 3_600
+    val m = (s % 3_600) / 60
     return when {
-        d > 0 -> "${d}d ${h}h"
-        h > 0 -> "${h}h ${m}m"
-        m > 0 -> "${m}m"
-        else -> "${seconds}s"
+        d > 0 -> narrowUnits(Measure(d, MeasureUnit.DAY), Measure(h, MeasureUnit.HOUR))
+        h > 0 -> narrowUnits(Measure(h, MeasureUnit.HOUR), Measure(m, MeasureUnit.MINUTE))
+        m > 0 -> narrowUnits(Measure(m, MeasureUnit.MINUTE))
+        else -> narrowUnits(Measure(s, MeasureUnit.SECOND))
     }
 }
+
+/** Amounts with short units in the phone's language, like "5h 3m". */
+fun narrowUnits(vararg measures: Measure): String =
+    MeasureFormat.getInstance(Locale.getDefault(), MeasureFormat.FormatWidth.NARROW).formatMeasures(*measures)
 
 fun percent(fraction: Double): Int = (fraction * 100).roundToInt().coerceIn(0, 100)
 

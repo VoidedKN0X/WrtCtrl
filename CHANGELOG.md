@@ -4,6 +4,13 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+### Fixed
+
+- **Uptimes and lease times use your language's short units.** Uptime of the router, the WAN and interfaces, Multi-WAN "online for" times and DHCP lease times were always written with English letters (like "14d 2h"). They now use the phone's own short units, so French shows "14j 2h", German its own abbreviations, and English stays as it was.
+- **German router line keeps its capitals.** Under the router's name on the Overview, the version and uptime line is written in lower case as a style; in German that turned nouns like "Laufzeit" into "laufzeit". German now keeps the words as written.
+
 ## v1.7.0 (2026-11-21)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published.

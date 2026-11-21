@@ -177,7 +177,7 @@ private fun Header(name: String, online: Boolean, version: String, uptime: Long?
             listOfNotNull(
                 version.ifBlank { null }?.let { stringResource(R.string.openwrt_version, it) },
                 uptime?.let { stringResource(R.string.uptime_value, formatUptime(it)) },
-            ).joinToString(" · ").lowercase(Locale.getDefault()),
+            ).joinToString(" · ").let { if (Locale.getDefault().language == "de") it else it.lowercase(Locale.getDefault()) },
             style = CtrlType.Mono,
             color = CtrlColors.Muted,
         )
