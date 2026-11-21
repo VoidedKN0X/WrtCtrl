@@ -4,6 +4,14 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+Changes on `main` that aren't in a release yet. They ship with the next version.
+
+### New
+
+- **WrtCtrl in Dutch.** The app now follows your phone's language: with the phone set to Dutch, every screen, message and notification of WrtCtrl is in Dutch (Belgian Dutch, informal "je"); with any other language it stays English. There is no language switch in the app; Android decides, and under Settings > Apps > WrtCtrl > Language you can also pick English or Dutch for WrtCtrl alone. OpenWrt's own names and technical words (WAN, LAN, DHCP, DNS, firewall zones, Tailscale, WireGuard, exit node, mwan3, LuCI), units and the app name are not translated, and what the router itself sends (log lines, package names, service names, error text from OpenWrt) stays as the router writes it. The translation was written with this release and has not been read on a phone yet: tell me where a word is off.
+
 ## v1.5.0 (2026-11-21)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published.

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The languages WrtCtrl is translated into. The app follows the phone's language; Android also lists these
+     under Settings > Apps > WrtCtrl > Language for people who want this app in another language than the phone. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="nl" />
+</locale-config>

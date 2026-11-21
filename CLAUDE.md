@@ -38,6 +38,10 @@ Every new version needs a detailed entry at the top of `CHANGELOG.md`, under a h
 - Configuration backups stream straight to the user's chosen file and stay in OpenWrt's format.
 - `SealedFileTest` and `NotesStoreTest` cover the format, the migration, the cache and the key rules (`./gradlew :app:testDebugUnitTest`; CI doesn't run them).
 
+## Languages
+
+English (`values/strings.xml`) and Dutch (`values-nl/strings.xml`, Belgian Dutch, informal "je"). Android picks by the phone's language (`res/xml/locales_config.xml` lists both for the per-app language setting); there is no in-app switch. A new string needs both files.
+
 ## Dependency verification
 
 Gradle checks every downloaded library and plugin against `gradle/verification-metadata.xml` (sha256 only, no PGP). When a dependency or plugin changes, start the `verification-metadata.yml` workflow (`gh api -X POST repos/VoidedKN0X/WrtCtrl/actions/workflows/verification-metadata.yml/dispatches -f ref=main`), decode the file from its log (gzip + base64 between the BEGIN/END markers; it already trusts `-sources.jar` and `-javadoc.jar` for Android Studio), check the diff and commit it in the same push. Never turn verification off or make it lenient in the real build.
