@@ -8,6 +8,10 @@ To publish a new version: bump `versionCode` and `versionName` in `app/build.gra
 
 Built and checked by CI only: nothing here has been run on a phone or against a router yet.
 
+### Fixed
+
+- **Fixed before release: the app would have crashed at start with the new build tools.** WrtCtrl uses WorkManager for its background work, and WorkManager stores its jobs in a small Room database that is created by name when the app starts. The shrinker (R8) in Android Gradle Plugin 9 is stricter than the old one and removed the constructor that needs, which makes the app stop right at launch (a known problem with Room 2.6.1 under Android Gradle Plugin 9). A keep rule for that constructor, the same one newer Room versions ship themselves, is now in `app/proguard-rules.pro`. No released version was affected: the new build tools have not been in any release. Built by CI only; not yet run on a phone.
+
 ### Changed
 
 - **The system log downloads far less while it's open.** The log screen used to download the last 1,000 lines again every 5 seconds. It now downloads all 1,000 once and after that only the last 100 lines per refresh, and joins the new ones onto what it already shows. OpenWrt's log service numbers every line, and the join is only made when the newly read lines connect to the shown ones without any doubt: same line numbers, and the lines both lists share must be identical (number, time, priority and text). If they don't connect (100 or more new lines within one refresh, a router or log service restart, a cleared log, or a router that sends no line numbers), WrtCtrl reads all 1,000 lines again, as before. What you see is the same list in the same order, still the newest 1,000 lines at most. One small difference: on a router whose log memory holds fewer than 1,000 lines, lines the router has already dropped can stay on screen (up to 1,000 in total) until you leave the log and open it again. When nothing new was logged, the screen is no longer redrawn.
