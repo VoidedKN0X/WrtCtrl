@@ -74,8 +74,11 @@
     <string name="pin_use_pin">PIN verwenden</string>
     <string name="pin_forgot">PIN vergessen?</string>
     <string name="pin_forgot_title">PIN vergessen?</string>
-    <string name="pin_forgot_body">Die PIN kann nicht wiederhergestellt werden, weil sie deine Router-Zugangsdaten verschlüsseln kann. WrtCtrl entfernt alle Router von diesem Handy und schaltet die App-Sperre aus. An deinen Routern ändert sich nichts; füge sie neu hinzu, um weiterzumachen.</string>
+    <string name="pin_forgot_body">Die PIN kann nicht wiederhergestellt werden, weil sie deine Router-Zugangsdaten verschlüsseln kann. WrtCtrl entfernt alle Router von diesem Handy und schaltet die App-Sperre aus. An deinen Routern ändert sich nichts; füge sie neu hinzu, um weiterzumachen. Wenn dein Handy eine Displaysperre hat, bestätigst du zuerst damit.</string>
     <string name="pin_forgot_confirm">Router entfernen und zurücksetzen</string>
+    <string name="pin_reset_prompt_title">App-Sperre von WrtCtrl zurücksetzen</string>
+    <string name="pin_reset_prompt_subtitle">Bestätige mit der Displaysperre deines Handys, dass du es bist</string>
+    <string name="pin_reset_prompt_failed">Displaysperre konnte nicht angezeigt werden</string>
     <string name="pin_fingerprint_changed">Ein Fingerabdruck wurde hinzugefügt oder entfernt. Entsperre mit deiner PIN und aktiviere das Entsperren per Fingerabdruck dann erneut.</string>
     <string name="pin_fingerprint_failed">Entsperren per Fingerabdruck fehlgeschlagen. Verwende deine PIN.</string>
     <string name="pin_choose_title">App-PIN festlegen</string>

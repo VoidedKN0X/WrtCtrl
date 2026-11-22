@@ -1,5 +1,7 @@
 package com.vknxworks.wrtctrl.ui.clients
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -136,11 +138,16 @@ private fun LiveRate(cl: NetClient, nlbwInstalled: Boolean) {
         val now = Sample(System.currentTimeMillis(), client.conntrack())
         val prev = last[0]
         last[0] = now
-        if (prev != null) {
-            rates += Bandwidth.rate(prev.entries, now.entries, ips, (now.atMs - prev.atMs) / 1000.0) * 8
+        // Matching thousands of connections: on a background thread, only the result comes back to the screen.
+        val (rate, counts) = withContext(Dispatchers.Default) {
+            val r = prev?.let { Bandwidth.rate(it.entries, now.entries, ips, (now.atMs - it.atMs) / 1000.0) * 8 }
+            r to Bandwidth.countsBytes(now.entries)
+        }
+        if (rate != null) {
+            rates += rate
             if (rates.size > 60) rates.removeAt(0)
         }
-        Bandwidth.countsBytes(now.entries)
+        counts
     }
     CtrlCard(Modifier.padding(horizontal = Gutter, vertical = 6.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

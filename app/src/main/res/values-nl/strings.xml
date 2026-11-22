@@ -75,8 +75,11 @@
     <string name="pin_use_pin">Pincode gebruiken</string>
     <string name="pin_forgot">Pincode vergeten?</string>
     <string name="pin_forgot_title">Je pincode vergeten?</string>
-    <string name="pin_forgot_body">De pincode kan niet hersteld worden, omdat ze je routeraanmeldingen kan versleutelen. WrtCtrl verwijdert elke router van deze telefoon en zet de app-vergrendeling uit. Aan je routers verandert niets; voeg ze opnieuw toe om verder te gaan.</string>
+    <string name="pin_forgot_body">De pincode kan niet hersteld worden, omdat ze je routeraanmeldingen kan versleutelen. WrtCtrl verwijdert elke router van deze telefoon en zet de app-vergrendeling uit. Aan je routers verandert niets; voeg ze opnieuw toe om verder te gaan. Heeft je telefoon een schermvergrendeling, dan bevestig je eerst daarmee.</string>
     <string name="pin_forgot_confirm">Routers verwijderen en opnieuw beginnen</string>
+    <string name="pin_reset_prompt_title">App-vergrendeling van WrtCtrl resetten</string>
+    <string name="pin_reset_prompt_subtitle">Bevestig met de schermvergrendeling van je telefoon dat jij het bent</string>
+    <string name="pin_reset_prompt_failed">De schermvergrendeling kon niet getoond worden</string>
     <string name="pin_fingerprint_changed">Er is een vingerafdruk toegevoegd of verwijderd. Ontgrendel met je pincode en zet ontgrendelen met vingerafdruk daarna opnieuw aan.</string>
     <string name="pin_fingerprint_failed">Ontgrendelen met je vingerafdruk is niet gelukt. Gebruik je pincode.</string>
     <string name="pin_choose_title">Kies een app-pincode</string>

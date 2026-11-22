@@ -1,5 +1,6 @@
 package com.vknxworks.wrtctrl.data.lock
 
+import android.app.KeyguardManager
 import android.content.Context
 import android.os.SystemClock
 import androidx.biometric.BiometricManager
@@ -340,6 +341,55 @@ object AppLock {
         openPrompt = prompt
         runCatching { prompt.authenticate(info) }.onFailure {
             if (endPrompt(generation)) onResult(it.message)
+        }
+    }
+
+    /** The phone has a screen lock (PIN, pattern or password) that can confirm it's the owner. */
+    fun screenLockSet(context: Context): Boolean = runCatching {
+        context.getSystemService(KeyguardManager::class.java)?.isDeviceSecure == true
+    }.getOrDefault(true)
+
+    /**
+     * The phone's own screen lock (or a strong fingerprint). Only used for "Forgot PIN?", so that resetting the
+     * app lock isn't open to anyone who picks up the unlocked phone. [onResult] gets null when confirmed, or an
+     * error message; cancelling calls [onCancel] instead. Doesn't unlock the app by itself.
+     */
+    fun screenLockAuthenticate(activity: FragmentActivity, onCancel: () -> Unit, onResult: (String?) -> Unit) {
+        if (activity.isFinishing || activity.isDestroyed) return
+        val generation = beginPrompt()
+        val prompt = runCatching {
+            BiometricPrompt(
+                activity,
+                ContextCompat.getMainExecutor(activity),
+                object : BiometricPrompt.AuthenticationCallback() {
+                    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                        if (endPrompt(generation)) onResult(null)
+                    }
+
+                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                        if (!endPrompt(generation)) return
+                        val cancelled = errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON ||
+                            errorCode == BiometricPrompt.ERROR_USER_CANCELED ||
+                            errorCode == BiometricPrompt.ERROR_CANCELED
+                        if (cancelled) onCancel() else onResult(errString.toString())
+                    }
+
+                    override fun onAuthenticationFailed() = Unit
+                },
+            )
+        }.getOrElse {
+            if (endPrompt(generation)) onResult(activity.getString(R.string.pin_reset_prompt_failed))
+            return
+        }
+        val info = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(activity.getString(R.string.pin_reset_prompt_title))
+            .setSubtitle(activity.getString(R.string.pin_reset_prompt_subtitle))
+            .setAllowedAuthenticators(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)
+            .setConfirmationRequired(false)
+            .build()
+        openPrompt = prompt
+        runCatching { prompt.authenticate(info) }.onFailure {
+            if (endPrompt(generation)) onResult(activity.getString(R.string.pin_reset_prompt_failed))
         }
     }
 

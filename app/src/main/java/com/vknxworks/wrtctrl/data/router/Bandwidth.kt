@@ -10,6 +10,8 @@ import com.vknxworks.wrtctrl.data.api.long
 import com.vknxworks.wrtctrl.data.api.normMac
 import com.vknxworks.wrtctrl.data.api.objects
 import com.vknxworks.wrtctrl.data.api.str
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -140,4 +142,8 @@ suspend fun UbusClient.nlbwHistory(mac: String, max: Int = 12): List<PeriodUsage
     }
 }
 
-suspend fun UbusClient.conntrack(): List<ConnEntry> = Bandwidth.parseConntrack(call("luci", "getConntrackList"))
+/** A busy router has thousands of connections: parsed on a background thread, never on the main one. */
+suspend fun UbusClient.conntrack(): List<ConnEntry> {
+    val reply = call("luci", "getConntrackList")
+    return withContext(Dispatchers.Default) { Bandwidth.parseConntrack(reply) }
+}

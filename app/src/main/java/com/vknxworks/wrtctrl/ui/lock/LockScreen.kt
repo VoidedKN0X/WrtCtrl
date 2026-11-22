@@ -324,7 +324,15 @@ private fun PinLockScreen(activity: FragmentActivity) {
             onDismiss = { forgetting = false },
             onConfirm = {
                 forgetting = false
-                scope.launch { c.forgetEverything() }
+                if (!AppLock.screenLockSet(activity)) {
+                    // No screen lock on the phone to confirm with: reset as before.
+                    scope.launch { c.forgetEverything() }
+                } else if (!activity.isFinishing && !activity.isDestroyed) {
+                    // Only the phone's owner may reset it: confirm with the phone's own screen lock first.
+                    AppLock.screenLockAuthenticate(activity, onCancel = {}) { error ->
+                        if (error == null) scope.launch { c.forgetEverything() } else message = error
+                    }
+                }
             },
         )
     }

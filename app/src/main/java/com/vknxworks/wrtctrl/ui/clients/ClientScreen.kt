@@ -39,6 +39,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -56,6 +57,8 @@ import com.vknxworks.wrtctrl.container
 import com.vknxworks.wrtctrl.data.api.OptionalPackage
 import com.vknxworks.wrtctrl.data.api.deauth
 import com.vknxworks.wrtctrl.data.api.installedOptional
+import com.vknxworks.wrtctrl.data.api.Station
+import com.vknxworks.wrtctrl.data.api.stations
 import com.vknxworks.wrtctrl.data.api.usageByMac
 import com.vknxworks.wrtctrl.data.api.wake
 import com.vknxworks.wrtctrl.data.router.ClientNote
@@ -63,6 +66,7 @@ import com.vknxworks.wrtctrl.data.router.ClientNotes
 import com.vknxworks.wrtctrl.data.router.Link
 import com.vknxworks.wrtctrl.data.router.NetClient
 import com.vknxworks.wrtctrl.data.router.loadClients
+import com.vknxworks.wrtctrl.data.router.withStation
 import com.vknxworks.wrtctrl.data.router.stageBlock
 import com.vknxworks.wrtctrl.data.router.stageRemoveStaticLease
 import com.vknxworks.wrtctrl.data.router.stageStaticLease
@@ -113,17 +117,26 @@ fun ClientScreen(mac: String) {
 
     val optional = rememberRouterData { client -> runCatching { client.installedOptional() }.getOrDefault(emptySet()) }
     val hasNlbw = optional.value?.contains(OptionalPackage.NLBWMON) == true
-    val data = rememberRouterData(3_000, hasNlbw) { client ->
+    // Everything about the device (addresses, leases, notes, usage) every 15 s, like the Clients tab: building it
+    // takes several requests on the router, some of which start a process there.
+    val data = rememberRouterData(15_000, hasNlbw) { client ->
         val usage = if (hasNlbw) runCatching { client.usageByMac() }.getOrDefault(emptyMap()) else emptyMap()
         val list = loadClients(context, client, router?.id.orEmpty(), usage)
-        val me = list.firstOrNull { it.mac == mac }
-        (me?.link as? Link.Wifi)?.let { w ->
-            history.add(SignalPoint(System.currentTimeMillis() / 1000, w.signal.toDouble(), (w.rxRate * 1000).toDouble()))
-            if (history.size > 120) history.removeAt(0)
-        }
-        me
+        list.firstOrNull { it.mac == mac }
     }
-    val cl = data.value
+    val full = data.value
+    // Only the Wi-Fi signal (for the chart) every 3 s: one iwinfo request on the network the device is on.
+    val wifiIfname = (full?.link as? Link.Wifi)?.ifname
+    val live = rememberRouterData<Station?>(3_000, wifiIfname, mac) { client ->
+        val ifname = wifiIfname ?: return@rememberRouterData null
+        if (client.acl?.canCall("iwinfo", "assoclist") == false) return@rememberRouterData null
+        val station = client.stations(ifname).firstOrNull { it.mac == mac } ?: return@rememberRouterData null
+        history.add(SignalPoint(System.currentTimeMillis() / 1000, station.signal.toDouble(), (station.rxRate * 1000).toDouble()))
+        if (history.size > 120) history.removeAt(0)
+        station
+    }
+    // The newest signal and rates on top of the 15 s picture, so the numbers match the chart.
+    val cl = full?.withStation(live.value)
 
     var staticDialog by remember { mutableStateOf(false) }
     var notesDialog by remember { mutableStateOf(false) }
@@ -132,8 +145,11 @@ fun ClientScreen(mac: String) {
     // A block of this very phone waits here for the second confirmation.
     var confirmSelf by remember { mutableStateOf<Pair<BlockTarget, BlockSchedule?>?>(null) }
     val snackbar = remember { SnackbarHostState() }
-    val phoneIps = remember(data.updatedAt) { PhoneAddresses.current(context) }
-    val isThisPhone = cl != null && ThisPhone.matches(cl.ipv4 + cl.ipv6, phoneIps)
+    // This phone's own addresses, read off the main thread at each full refresh (a system call per network).
+    // Until the first read is done they're read right here, so "this phone" is never missed (blocking it asks twice).
+    var phoneIps by remember { mutableStateOf<Set<String>?>(null) }
+    LaunchedEffect(data.updatedAt) { phoneIps = withContext(Dispatchers.Default) { PhoneAddresses.current(context) } }
+    val isThisPhone = cl != null && ThisPhone.matches(cl.ipv4 + cl.ipv6, phoneIps ?: PhoneAddresses.current(context))
     var confirmDeauth by remember { mutableStateOf(false) }
     var confirmUnstatic by remember { mutableStateOf(false) }
 

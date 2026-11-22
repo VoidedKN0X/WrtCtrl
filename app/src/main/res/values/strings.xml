@@ -77,8 +77,11 @@
     <string name="pin_use_pin">Use PIN</string>
     <string name="pin_forgot">Forgot PIN?</string>
     <string name="pin_forgot_title">Forgot your PIN?</string>
-    <string name="pin_forgot_body">The PIN can\'t be recovered, because it can encrypt your router logins. WrtCtrl will remove every router from this phone and turn the app lock off. Nothing changes on your routers; add them again to continue.</string>
+    <string name="pin_forgot_body">The PIN can\'t be recovered, because it can encrypt your router logins. WrtCtrl will remove every router from this phone and turn the app lock off. Nothing changes on your routers; add them again to continue. If your phone has a screen lock, you\'ll confirm with it first.</string>
     <string name="pin_forgot_confirm">Remove routers and reset</string>
+    <string name="pin_reset_prompt_title">Reset WrtCtrl\'s app lock</string>
+    <string name="pin_reset_prompt_subtitle">Use your phone\'s screen lock to confirm it\'s you</string>
+    <string name="pin_reset_prompt_failed">Couldn\'t show the screen lock prompt</string>
     <string name="pin_fingerprint_changed">A fingerprint was added or removed. Unlock with your PIN, then turn fingerprint unlock on again.</string>
     <string name="pin_fingerprint_failed">Couldn\'t unlock with your fingerprint. Use your PIN.</string>
     <string name="pin_choose_title">Choose an app PIN</string>

@@ -4,6 +4,18 @@ What changed in each WrtCtrl release. Every release on the [Releases page](https
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+### Security
+
+- **"Forgot PIN?" now asks for your phone's screen lock first.** Resetting the app lock (which removes your routers from the phone and turns the lock off) used to need only a tap on the confirmation. Someone holding your unlocked phone could use it to get past WrtCtrl's lock and add your router again with a password they know. Now, after you confirm, the phone's own screen lock (PIN, pattern, password or a fingerprint) is asked for, and only then is WrtCtrl reset. Cancelling it changes nothing. If your phone has no screen lock, it works as before (the confirmation alone).
+
+### Fixed
+
+- **The device page no longer keeps your router busy.** While a device's page was open, WrtCtrl asked the router for the whole device list every 3 seconds: DHCP leases, host names, the neighbour table (which starts a program on the router), every Wi-Fi network's client list, static leases, firewall rules and, with nlbwmon, the data-use table (another program). Now only the device's Wi-Fi signal and speed are asked every 3 seconds (one small request on the Wi-Fi network it's on), so the signal chart moves exactly as before; addresses, lease, data use and the rest refresh every 15 seconds, like the Clients tab. The signal and speed in the device details follow the 3-second updates.
+- **Smoother device page on a busy router.** The live speed chart compares the router's whole connection list (thousands of entries on a busy network) every 3 seconds. That work ran on the thread that draws the screen and could make scrolling stutter; it now runs in the background.
+- **Less work while drawing the device page.** Working out whether the device is this phone (it compares the phone's own addresses) asked Android for every network's addresses on each refresh, while drawing the screen. It's now read in the background, once per full refresh.
+
 ## v1.7.1 (2026-11-21)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published.

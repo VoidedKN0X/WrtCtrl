@@ -61,6 +61,16 @@ data class NetClient(
     val band: String? get() = (link as? Link.Wifi)?.band
 }
 
+/**
+ * This device with the newest Wi-Fi signal and rates from [station] (the device page asks only for those every
+ * 3 s, and for everything else every 15 s). Unchanged when it isn't on Wi-Fi or [station] is another device.
+ */
+fun NetClient.withStation(station: com.vknxworks.wrtctrl.data.api.Station?): NetClient {
+    val w = link as? Link.Wifi ?: return this
+    if (station == null || station.mac != mac) return this
+    return copy(link = w.copy(signal = station.signal, rxRate = station.rxRate, txRate = station.txRate))
+}
+
 /** Name prefix of the firewall rules WrtCtrl adds to block a device from the internet. */
 const val BLOCK_RULE_PREFIX = "WrtCtrl block "
 

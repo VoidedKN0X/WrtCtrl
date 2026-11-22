@@ -74,8 +74,11 @@
     <string name="pin_use_pin">Utiliser le code PIN</string>
     <string name="pin_forgot">Code PIN oublié ?</string>
     <string name="pin_forgot_title">Code PIN oublié ?</string>
-    <string name="pin_forgot_body">Le code PIN ne peut pas être récupéré, car il peut chiffrer vos identifiants de routeur. WrtCtrl va supprimer tous les routeurs de ce téléphone et désactiver le verrouillage de l’appli. Rien ne change sur vos routeurs ; ajoutez-les à nouveau pour continuer.</string>
+    <string name="pin_forgot_body">Le code PIN ne peut pas être récupéré, car il peut chiffrer vos identifiants de routeur. WrtCtrl va supprimer tous les routeurs de ce téléphone et désactiver le verrouillage de l’appli. Rien ne change sur vos routeurs ; ajoutez-les à nouveau pour continuer. Si votre téléphone a un verrouillage d’écran, vous le confirmerez d’abord avec celui-ci.</string>
     <string name="pin_forgot_confirm">Supprimer les routeurs et réinitialiser</string>
+    <string name="pin_reset_prompt_title">Réinitialiser le verrouillage de WrtCtrl</string>
+    <string name="pin_reset_prompt_subtitle">Utilisez le verrouillage d’écran de votre téléphone pour confirmer votre identité</string>
+    <string name="pin_reset_prompt_failed">Impossible d’afficher le verrouillage d’écran</string>
     <string name="pin_fingerprint_changed">Une empreinte a été ajoutée ou supprimée. Déverrouillez avec votre code PIN, puis réactivez le déverrouillage par empreinte.</string>
     <string name="pin_fingerprint_failed">Impossible de déverrouiller avec votre empreinte. Utilisez votre code PIN.</string>
     <string name="pin_choose_title">Choisir un code PIN d’appli</string>
